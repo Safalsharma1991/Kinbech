@@ -136,13 +136,18 @@
             }
 
             try {
+                const items = cart.map(i => ({
+                    product_id: i.id,
+                    quantity: i.qty,
+                }));
+
                 const res = await fetch("/checkout", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
                         Authorization: "Bearer " + token,
                     },
-                    body: JSON.stringify({ items: cart }),
+                    body: JSON.stringify({ address, items }),
                 });
 
                 const data = await res.json();
