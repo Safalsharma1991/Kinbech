@@ -203,11 +203,18 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = 
 
 
 @app.post("/reset-password")
-async def reset_password(data: ResetPasswordRequest):
-    user = users_db.get(data.username)
+async def reset_password(data: ResetPasswordRequest, db: Session = Depends(get_db)):
+    # 1. Query DBUser for the specified username
+    user = db.query(DBUser).filter(DBUser.username == data.username).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    user["hashed_password"] = get_password_hash(data.new_password)
+
+    # 2. Update its hashed_password with the new password hash
+    user.hashed_password = get_password_hash(data.new_password)
+
+    # 3. Commit the change to the database
+    db.commit()
+
     return {"msg": "Password reset successful"}
 
 
