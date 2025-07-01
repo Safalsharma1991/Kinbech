@@ -92,7 +92,7 @@
 
 <body>
 
-  <div class="container">
+  <div class="container" id="form-container">
     <!-- Login form -->
     <div id="login" class="card">
       <h2>Login</h2>
@@ -203,14 +203,18 @@
       }
     }
 
-    function toggleRegister() {
+  function toggleRegister() {
+      document.getElementById("forgot-form").classList.add("hidden");
       document.getElementById("login").classList.add("hidden");
       document.getElementById("register-form").classList.remove("hidden");
+      document.getElementById("form-container").classList.remove("hidden");
     }
 
     function toggleLogin() {
+      document.getElementById("forgot-form").classList.add("hidden");
       document.getElementById("register-form").classList.add("hidden");
       document.getElementById("login").classList.remove("hidden");
+      document.getElementById("form-container").classList.remove("hidden");
     }
     // Auto-load view based on #buyer or #seller from profile page
     window.addEventListener("load", () => {
@@ -227,6 +231,7 @@
     function toggleForgotPassword() {
       document.getElementById("login").classList.add("hidden");
       document.getElementById("register-form").classList.add("hidden");
+      document.getElementById("form-container").classList.add("hidden");
       document.getElementById("forgot-form").classList.remove("hidden");
     }
 
