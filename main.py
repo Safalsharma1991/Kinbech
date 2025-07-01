@@ -463,12 +463,26 @@ def get_notifications(current_user: dict = Depends(get_current_user_from_token),
 
 
 @app.get("/products/{product_id}", response_model=ProductOut)
-def get_product(product_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    product = db.query(Product).filter(
-        Product.id == product_id, Product.owner_id == current_user.id).first()
+def get_product(
+    product_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user_from_token),
+):
+    product = db.query(DBProduct).filter(
+        DBProduct.id == product_id,
+        DBProduct.seller == current_user["username"],
+    ).first()
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
-    return product
+    return {
+        "id": product.id,
+        "name": product.name,
+        "description": product.description,
+        "price": product.price,
+        "delivery_range_km": product.delivery_range_km,
+        "expiry_datetime": product.expiry_datetime,
+        "image_urls": product.image_url.split(","),
+    }
 
 
 templates = Jinja2Templates(directory="templates")  # Update path if needed
