@@ -131,6 +131,8 @@
                 document.getElementById("checkout-msg").textContent = "Your cart is empty.";
                 return;
             }
+            const address = prompt("Enter delivery address:");
+            if (!address) return;
 
             try {
                 const res = await fetch("/checkout", {
@@ -139,7 +141,7 @@
                         "Content-Type": "application/json",
                         Authorization: "Bearer " + token,
                     },
-                    body: JSON.stringify({ items: cart }),
+                    body: JSON.stringify({ items: cart, address }),
                 });
 
                 const data = await res.json();
