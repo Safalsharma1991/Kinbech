@@ -18,7 +18,6 @@ from fastapi.responses import HTMLResponse
 from models import Product, UserModel as User
 from schemas import ProductOut
 from database import get_db
-from auth import get_current_user
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import RedirectResponse
 from pydantic import BaseModel
@@ -45,12 +44,6 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # Simulated in-memory user DB
 users_db: Dict[str, dict] = {}
-
-products = []
-product_id_counter = 1
-
-
-
 
 class UserCreate(BaseModel):
     username: str
@@ -93,24 +86,6 @@ class ResetRequest(BaseModel):
     number: str
 
 
-PRODUCTS_FILE = "products.json"
-
-
-def load_products():
-    if os.path.exists(PRODUCTS_FILE):
-        with open(PRODUCTS_FILE, "r") as f:
-            return json.load(f)
-    return []
-
-
-def save_products(products):
-    with open(PRODUCTS_FILE, "w") as f:
-        json.dump(products, f, indent=2)
-
-
-# Load on startup
-products = load_products()
-product_id_counter = max([p["id"] for p in products], default=0) + 1
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
