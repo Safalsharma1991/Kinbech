@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Seller Orders</title>
+    <style>
+        body {
+            font-family: Arial;
+            max-width: 800px;
+            margin: auto;
+            padding: 20px;
+        }
+
+        .order {
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-bottom: 20px;
+        }
+
+        .order h3 {
+            margin: 0 0 10px;
+        }
+
+        .items {
+            margin-left: 20px;
+        }
+
+        .fulfilled {
+            color: green;
+        }
+    </style>
+</head>
+
+<body>
+    <h2>My Orders</h2>
+    <div id="order-list">Loading...</div>
+    <button onclick="window.location.href='/profile'">Menu</button>
+
+    <script>
+        const token = localStorage.getItem("access_token");
+        if (!token) window.location.href = "/static/index.html";
+
+        async function loadOrders() {
+            try {
+                const res = await fetch("/seller/orders", {
+                    headers: { Authorization: "Bearer " + token }
+                });
+                const orders = await res.json();
+                const container = document.getElementById("order-list");
+                container.innerHTML = "";
+
+                if (orders.length === 0) {
+                    container.innerHTML = "<p>No orders received yet.</p>";
+                    return;
+                }
+
+                orders.forEach(order => {
+                    const div = document.createElement("div");
+                    div.className = "order";
+                    div.innerHTML = `
+            <h3>Order #${order.id} - Buyer: ${order.buyer}</h3>
+            <div class="items">
+              ${order.items.map(item => `
+                ${item.name} x${item.quantity} - ₹${(item.price * item.quantity).toFixed(2)}<br/>
+              `).join("")}
+              <strong>Total: ₹${order.total.toFixed(2)}</strong><br/>
+              Status: <span class="${order.status === 'Fulfilled' ? 'fulfilled' : ''}">${order.status}</span><br/>
+              ${order.status !== "Fulfilled" ? `<button onclick="markFulfilled(${order.id})">Mark as Fulfilled</button>` : ""}
+            </div>
+          `;
+                    container.appendChild(div);
+                });
+            } catch (err) {
+                document.getElementById("order-list").innerHTML = "Error loading orders.";
+            }
+        }
+
+        async function markFulfilled(orderId) {
+            const res = await fetch(`/seller/orders/${orderId}/fulfill`, {
+                method: "POST",
+                headers: { Authorization: "Bearer " + token }
+            });
+            if (res.ok) loadOrders();
+            else alert("Failed to update order.");
+        }
+
+        loadOrders();
+    </script>
+</body>
+
+</html>

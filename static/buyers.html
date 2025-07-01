@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Buyer View</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 800px;
+            margin: auto;
+        }
+
+        h2 {
+            text-align: center;
+        }
+
+        #product-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        li {
+            border: 1px solid #ccc;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+        }
+
+        img {
+            display: block;
+            margin-bottom: 10px;
+            max-width: 100px;
+            height: auto;
+        }
+
+        button {
+            margin-top: 10px;
+            padding: 6px 12px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        #buyer-msg {
+            color: green;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h2>Welcome Buyer!</h2>
+    <h3>Available Products</h3>
+    <ul id="product-list">
+        <li>Loading products...</li>
+    </ul>
+    <p id="buyer-msg"></p>
+    <div
+        style="display: flex; justify-content: space-between; align-items: center; padding: 10px 20px; background-color: #f8f9fa; border-bottom: 1px solid #ccc;">
+        <button onclick="goToMenu()"
+            style="background-color: #007bff; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer;">
+            Menu
+        </button>
+        <button onclick="window.location.href='/static/cart.html'">Go to Cart</button>
+
+
+        <button onclick="logout()"
+            style="background-color: red; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer;">
+            Logout
+        </button>
+    </div>
+
+
+    <script>
+        const token = localStorage.getItem("access_token");
+
+        if (!token) {
+            window.location.href = "/static/index.html";
+        }
+
+        async function loadProducts() {
+            try {
+                const res = await fetch("/products", {
+                    headers: { Authorization: "Bearer " + token }
+                });
+                if (!res.ok) throw new Error("Failed to load products");
+
+                const products = await res.json();
+                const list = document.getElementById("product-list");
+                list.innerHTML = "";
+
+                if (products.length === 0) {
+                    list.innerHTML = "<li>No products available.</li>";
+                    return;
+                }
+
+                products.forEach(p => {
+                    const li = document.createElement("li");
+                    li.innerHTML = `
+  ${p.image_urls.map(url => `<img src="${url}" alt="${p.name}" width="150" height="150">`).join("")}<br/>
+
+  <strong>${p.name}</strong> - ₹${p.price.toFixed(2)}<br/>
+  ${p.description ? p.description + "<br/>" : ""}
+  <button onclick="buyProduct(${p.id})">Buy</button>
+   <button onclick="addToCart(${p.id}, '${p.name}', ${p.price})">Add to Cart</button>
+`;
+
+                    list.appendChild(li);
+                });
+
+            } catch (err) {
+                document.getElementById("product-list").innerHTML = "<li>Error loading products.</li>";
+            }
+        }
+
+        async function buyProduct(id) {
+            try {
+                const res = await fetch(`/buy/${id}`, {
+                    method: "POST",
+                    headers: { Authorization: "Bearer " + token }
+                });
+
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.detail || "Failed to buy product");
+
+                document.getElementById("buyer-msg").textContent = data.msg;
+            } catch (err) {
+                document.getElementById("buyer-msg").textContent = err.message;
+                document.getElementById("buyer-msg").style.color = "red";
+            }
+        }
+        function logout() {
+            localStorage.removeItem("access_token");
+            window.location.href = "/static/index.html";  // login page
+        }
+
+        function goToMenu() {
+            window.location.href = "/static/profile.html";  // go back to profile page
+        }
+
+        loadProducts();
+        function addToCart(id, name, price) {
+            const cart = JSON.parse(localStorage.getItem("cart")) || [];
+
+            const existing = cart.find(item => item.id === id);
+            if (existing) {
+                existing.qty += 1;
+            } else {
+                cart.push({ id, name, price, qty: 1 });
+            }
+
+            localStorage.setItem("cart", JSON.stringify(cart));
+            alert(`${name} added to cart.`);
+        }
+
+        function viewCart() {
+            const cart = JSON.parse(localStorage.getItem("cart")) || [];
+            if (cart.length === 0) {
+                alert("Your cart is empty.");
+                return;
+            }
+
+            let message = "Cart Items:\n\n";
+            cart.forEach(item => {
+                message += `${item.name} x${item.qty} = ₹${item.qty * item.price}\n`;
+            });
+
+            alert(message);
+        }
+
+    </script>
+
+</body>
+
+</html>

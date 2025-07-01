@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Seller Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 40px auto;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+        }
+
+        h2 {
+            text-align: center;
+        }
+
+        input,
+        textarea {
+            width: 100%;
+            padding: 10px;
+            margin: 8px 0;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #218838;
+        }
+
+        .msg {
+            margin-top: 10px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .msg.success {
+            color: green;
+        }
+
+        .msg.error {
+            color: red;
+        }
+    </style>
+</head>
+
+<body>
+
+
+    <h2>Seller View - Add Product</h2>
+    <input type="text" id="product-name" placeholder="Product Name" />
+    <input type="text" id="product-desc" placeholder="Description (optional)" />
+    <input type="number" id="product-price" placeholder="Price" step="0.01" />
+    <input type="number" id="product-range" placeholder="Delivery Range (km)" />
+    <input type="datetime-local" id="product-expiry" placeholder="Expiry Date & Time" />
+    <input type="file" id="product-image" multiple>
+
+    <button onclick="addProduct()">Add Product</button>
+    <p id="seller-msg" style="color:green;"></p>
+
+
+    <div
+        style="display: flex; justify-content: space-between; align-items: center; padding: 10px 20px; background-color: #f8f9fa; border-bottom: 1px solid #ccc;">
+        <button onclick="goToMenu()"
+            style="background-color: #007bff; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer;">
+            Menu
+        </button>
+        <button onclick="logout()"
+            style="background-color: red; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer;">
+            Logout
+        </button>
+    </div>
+
+
+    <script>
+        const token = localStorage.getItem("access_token");
+
+        if (!token) {
+            alert("You are not logged in.");
+            window.location.href = "/static/index.html";
+        }
+
+        async function addProduct() {
+            const name = document.getElementById("product-name").value.trim();
+            const desc = document.getElementById("product-desc").value.trim();
+            const price = parseFloat(document.getElementById("product-price").value);
+            const range = parseInt(document.getElementById("product-range").value);
+            const expiry = document.getElementById("product-expiry").value;
+            const imageInput = document.getElementById("product-image");
+
+            if (!name || isNaN(price) || !imageInput.files.length) {
+                document.getElementById("seller-msg").style.color = "red";
+                document.getElementById("seller-msg").textContent = "All fields are required.";
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append("name", name);
+            formData.append("description", desc);
+            formData.append("price", price);
+            formData.append("delivery_range_km", range);
+            formData.append("expiry_datetime", expiry);
+            for (let i = 0; i < imageInput.files.length; i++) {
+                formData.append("images", imageInput.files[i]);
+            }
+
+            try {
+                const res = await fetch("/products", {
+                    method: "POST",
+                    headers: { Authorization: "Bearer " + token },
+                    body: formData
+                });
+
+                if (!res.ok) {
+                    const errorText = await res.text();
+                    console.error("Server error:", errorText);
+                    throw new Error(errorText || "Failed to add product");
+                }
+
+                document.getElementById("seller-msg").style.color = "green";
+                document.getElementById("seller-msg").textContent = "Product added successfully!";
+
+                // Clear inputs
+                document.getElementById("product-name").value = "";
+                document.getElementById("product-desc").value = "";
+                document.getElementById("product-price").value = "";
+                document.getElementById("product-range").value = "";
+                document.getElementById("product-expiry").value = "";
+                document.getElementById("product-image").value = "";
+            } catch (err) {
+                document.getElementById("seller-msg").style.color = "red";
+                document.getElementById("seller-msg").textContent = err.message;
+            }
+        }
+
+
+        function logout() {
+            localStorage.removeItem("access_token");
+            window.location.href = "/static/index.html";  // login page
+        }
+
+        function goToMenu() {
+            window.location.href = "/static/profile.html";  // go back to profile page
+        }
+    </script>
+
+</body>
+
+</html>

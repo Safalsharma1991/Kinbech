@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>User Profile</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f4f8;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .profile-card {
+            background: #fff;
+            padding: 30px 40px;
+            border-radius: 12px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            max-width: 400px;
+            width: 100%;
+        }
+
+        h2 {
+            color: #333;
+        }
+
+        p {
+            color: #444;
+            font-size: 16px;
+            margin: 10px 0;
+        }
+
+        button {
+            margin: 10px;
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #0078D4;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #005ea3;
+        }
+
+        .button-link {
+            display: inline-block;
+            margin: 10px;
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #28a745;
+            /* green button */
+            color: white;
+            border: none;
+            border-radius: 6px;
+            text-decoration: none;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .button-link:hover {
+            background-color: #1e7e34;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="profile-card">
+        <div id="profileInfo"></div>
+        <div id="roleButtons"></div>
+        <button onclick="goToMyProducts()">Go to My Products</button>
+        <button onclick="logout()">Logout</button>
+    </div>
+
+    <script>
+        const token = localStorage.getItem("access_token");
+        if (!token) {
+            window.location.href = "/static/index.html";
+        }
+
+        fetch("/profile", {
+            headers: { Authorization: `Bearer ${token}` }
+        })
+            .then(response => response.json())
+            .then(data => {
+                const info = document.getElementById("profileInfo");
+                info.innerHTML = `
+                <h2>Welcome to Your Profile</h2>
+                <p><strong>Username:</strong> ${data.username}</p>
+                <p><strong>Full Name:</strong> ${data.full_name}</p>
+                <p><strong>Roles:</strong> ${data.role.join(", ")}</p>
+            `;
+
+                const roleButtons = document.getElementById("roleButtons");
+                roleButtons.innerHTML = "";
+
+                data.role.forEach(role => {
+                    const btn = document.createElement("button");
+                    btn.textContent = `Continue as ${role.charAt(0).toUpperCase() + role.slice(1)}`;
+                    btn.onclick = () => continueAs(role);
+                    roleButtons.appendChild(btn);
+                });
+            })
+            .catch(() => {
+                alert("Session expired or unauthorized");
+                window.location.href = "/static/index.html";
+            });
+
+        function logout() {
+            localStorage.removeItem("access_token");
+            window.location.href = "/static/index.html";
+        }
+
+        function continueAs(role) {
+            const token = localStorage.getItem("access_token");
+            if (!token) {
+                alert("Session expired. Please login again.");
+                window.location.href = "/static/index.html";
+                return;
+            }
+
+            if (role === 'buyer') {
+                window.location.href = "/static/buyers.html";
+            } else if (role === 'seller') {
+                window.location.href = "/static/sellers.html";
+            }
+        }
+
+        function goToMyProducts() {
+            const token = localStorage.getItem("access_token");
+            if (!token) {
+                alert("Session expired. Please login again.");
+                window.location.href = "/static/index.html";
+                return;
+            }
+
+            fetch("/my-products", {
+                headers: { Authorization: `Bearer ${token}` }
+            })
+                .then(response => {
+                    if (response.status === 200) {
+                        window.location.href = "/my-products";
+                    } else {
+                        alert("Unauthorized or session expired.");
+                        window.location.href = "/static/index.html";
+                    }
+                });
+        }
+    </script>
+</body>
+
+
+</html>
