@@ -88,6 +88,7 @@ class CheckoutRequest(BaseModel):
     items: List[CartItem]
     address: str
 
+
 class ResetRequest(BaseModel):
     number: str
 
@@ -312,7 +313,10 @@ async def checkout(
     current_user: dict = Depends(get_current_user_from_token),
     db: Session = Depends(get_db)
 ):
-    order = Order(buyer=current_user["username"], address=request.address)
+    order = Order(
+        buyer=current_user["username"],
+        address=request.address,
+    )
     db.add(order)
     db.flush()  # Get order.id
 

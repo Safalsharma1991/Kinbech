@@ -63,8 +63,6 @@
     <p id="total"></p>
     <button onclick="placeOrder()">Place Order</button>
     <button onclick="goBack()">Back to Products</button>
-    <button onclick="checkoutCart()">Checkout</button>
-    <p id="checkout-msg"></p>
 
     <script>
         let cart = JSON.parse(localStorage.getItem("cart")) || [];
@@ -110,20 +108,12 @@
             renderCart();
         }
 
-        function placeOrder() {
+        async function placeOrder() {
             if (cart.length === 0) return alert("Your cart is empty.");
-            // You can integrate backend API here later
-            localStorage.removeItem("cart");
-            cart = [];
-            document.getElementById("message").textContent = "Order placed successfully!";
-            renderCart();
-        }
 
-        function goBack() {
-            window.location.href = "/static/buyers.html";
-        }
+            const address = prompt("Enter delivery address:");
+            if (!address) return;
 
-        async function checkoutCart() {
             const token = localStorage.getItem("access_token");
             const cart = JSON.parse(localStorage.getItem("cart") || "[]");
 
@@ -131,8 +121,6 @@
                 document.getElementById("checkout-msg").textContent = "Your cart is empty.";
                 return;
             }
-            const address = prompt("Enter delivery address:");
-            if (!address) return;
 
             try {
                 const res = await fetch("/checkout", {
@@ -141,19 +129,27 @@
                         "Content-Type": "application/json",
                         Authorization: "Bearer " + token,
                     },
-                    body: JSON.stringify({ items: cart, address }),
+                    body: JSON.stringify({ items: cart }),
                 });
 
                 const data = await res.json();
-                if (!res.ok) throw new Error(data.detail || "Checkout failed");
+                if (!res.ok) throw new Error(data.detail || "Order failed");
 
-                localStorage.removeItem("cart"); // Clear cart on success
-                document.getElementById("checkout-msg").textContent = data.msg || "Order placed successfully!";
+                localStorage.removeItem("cart");
+                cart = [];
+                document.getElementById("message").style.color = "green";
+                document.getElementById("message").textContent = data.msg || "Order placed successfully!";
+                renderCart();
             } catch (err) {
-                document.getElementById("checkout-msg").style.color = "red";
-                document.getElementById("checkout-msg").textContent = err.message;
+                document.getElementById("message").style.color = "red";
+                document.getElementById("message").textContent = err.message;
             }
         }
+
+        function goBack() {
+            window.location.href = "/static/buyers.html";
+        }
+
 
         async function checkOrderNotifications() {
             const token = localStorage.getItem("access_token");
