@@ -193,6 +193,8 @@
                 document.getElementById("product-range").value = "";
                 document.getElementById("product-expiry").value = "";
                 document.getElementById("product-image").value = "";
+                // Refresh the products list so the new item appears
+                loadMyProducts();
             } catch (err) {
                 document.getElementById("seller-msg").style.color = "red";
                 document.getElementById("seller-msg").textContent = err.message;
