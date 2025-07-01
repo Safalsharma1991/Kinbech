@@ -63,6 +63,9 @@
 
 
     <h2>Seller View - Add Product</h2>
+    <input type="text" id="shop-name" placeholder="Shop Name" />
+    <button onclick="updateShopName()">Save Shop Name</button>
+    <p id="shop-msg" class="msg"></p>
     <input type="text" id="product-name" placeholder="Product Name" />
     <input type="text" id="product-desc" placeholder="Description (optional)" />
     <input type="number" id="product-price" placeholder="Price" step="0.01" />
@@ -72,6 +75,7 @@
 
     <button onclick="addProduct()">Add Product</button>
     <p id="seller-msg" style="color:green;"></p>
+    <ul id="my-products"></ul>
 
 
     <div
@@ -95,6 +99,52 @@
             window.location.href = "/static/index.html";
         }
 
+        async function loadShopName() {
+            const res = await fetch("/shop/name", {
+                headers: { Authorization: "Bearer " + token }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                document.getElementById("shop-name").value = data.shop_name || "";
+            }
+        }
+
+        async function updateShopName() {
+            const name = document.getElementById("shop-name").value.trim();
+            if (!name) return;
+            const form = new FormData();
+            form.append("name", name);
+            const res = await fetch("/shop/name", {
+                method: "POST",
+                headers: { Authorization: "Bearer " + token },
+                body: form
+            });
+            const out = document.getElementById("shop-msg");
+            if (res.ok) {
+                out.textContent = "Saved";
+                out.className = "msg success";
+                loadMyProducts();
+            } else {
+                out.textContent = "Error";
+                out.className = "msg error";
+            }
+        }
+
+        async function loadMyProducts() {
+            const res = await fetch("/api/my-products", {
+                headers: { Authorization: "Bearer " + token }
+            });
+            if (!res.ok) return;
+            const data = await res.json();
+            const list = document.getElementById("my-products");
+            list.innerHTML = "";
+            data.forEach(p => {
+                const li = document.createElement("li");
+                li.textContent = `${p.name} - ₹${p.price}`;
+                list.appendChild(li);
+            });
+        }
+
         async function addProduct() {
             const name = document.getElementById("product-name").value.trim();
             const desc = document.getElementById("product-desc").value.trim();
@@ -111,6 +161,7 @@
 
             const formData = new FormData();
             formData.append("name", name);
+            formData.append("shop_name", document.getElementById("shop-name").value.trim());
             formData.append("description", desc);
             formData.append("price", price);
             formData.append("delivery_range_km", range);
@@ -157,6 +208,9 @@
         function goToMenu() {
             window.location.href = "/static/profile.html";  // go back to profile page
         }
+
+        loadShopName();
+        loadMyProducts();
     </script>
 
 </body>

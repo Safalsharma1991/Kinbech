@@ -227,6 +227,25 @@ async def read_profile(current_user: dict = Depends(get_current_user_from_token)
     }
 
 
+@app.get("/shop/name")
+def get_shop_name(current_user: dict = Depends(get_current_user_from_token), db: Session = Depends(get_db)):
+    user = db.query(DBUser).filter(DBUser.username == current_user["username"]).first()
+    return {"shop_name": user.shop_name if user and user.shop_name else ""}
+
+
+@app.post("/shop/name")
+def set_shop_name(name: str = Form(...), current_user: dict = Depends(get_current_user_from_token), db: Session = Depends(get_db)):
+    user = db.query(DBUser).filter(DBUser.username == current_user["username"]).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    existing = db.query(DBUser).filter(DBUser.shop_name == name).first()
+    if existing and existing.id != user.id:
+        raise HTTPException(status_code=400, detail="Shop name already taken")
+    user.shop_name = name
+    db.commit()
+    return {"shop_name": user.shop_name}
+
+
 @app.post("/products")
 async def create_product(
     name: str = Form(...),
@@ -234,6 +253,7 @@ async def create_product(
     price: float = Form(...),
     delivery_range_km: int = Form(...),
     expiry_datetime: str = Form(...),
+    shop_name: str = Form(...),
     images: List[UploadFile] = File(...),
     current_user: dict = Depends(get_current_user_from_token),
     db: Session = Depends(get_db)
@@ -254,6 +274,7 @@ async def create_product(
         description=description,
         price=price,
         seller=current_user["username"],
+        shop_name=shop_name,
         image_url=",".join(image_urls),
         delivery_range_km=delivery_range_km,
         expiry_datetime=expiry_datetime,
@@ -276,6 +297,7 @@ async def get_products(current_user: dict = Depends(get_current_user_from_token)
             "description": p.description,
             "price": p.price,
             "seller": p.seller,
+            "shop_name": p.shop_name,
             "image_urls": p.image_url.split(","),
             "delivery_range_km": p.delivery_range_km,
             "expiry_datetime": p.expiry_datetime,
@@ -382,6 +404,7 @@ async def get_my_products(current_user: dict = Depends(get_current_user_from_tok
             "name": p.name,
             "description": p.description,
             "price": p.price,
+            "shop_name": p.shop_name,
             "image_urls": p.image_url.split(","),
             "delivery_range_km": p.delivery_range_km,
             "expiry_datetime": p.expiry_datetime,
@@ -459,6 +482,7 @@ def get_product(
         "name": product.name,
         "description": product.description,
         "price": product.price,
+        "shop_name": product.shop_name,
         "delivery_range_km": product.delivery_range_km,
         "expiry_datetime": product.expiry_datetime,
         "image_urls": product.image_url.split(","),
