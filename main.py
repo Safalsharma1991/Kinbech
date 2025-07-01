@@ -278,18 +278,32 @@ async def get_products(current_user: dict = Depends(get_current_user_from_token)
 
 
 @app.post("/buy/{product_id}")
-async def buy_product(product_id: int, current_user: dict = Depends(get_current_user_from_token)):
+async def buy_product(
+    product_id: int,
+    address: str = Body(...),
+    current_user: dict = Depends(get_current_user_from_token),
+    db: Session = Depends(get_db),
+):
     if "buyer" not in current_user["role"]:
         raise HTTPException(
             status_code=403, detail="Only buyers can purchase products")
 
-    product = next((p for p in products if p["id"] == product_id), None)
+    product = db.query(DBProduct).filter(DBProduct.id == product_id).first()
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
+    order = Order(buyer=current_user["username"], address=address)
+    db.add(order)
+    db.flush()
+    db.add(OrderItem(order_id=order.id, product_id=product_id, quantity=1))
+    db.commit()
 
     return {
-        "msg": f"You bought '{product['name']}' for ₹{product['price']}",
-        "product": product
+        "msg": f"You bought '{product.name}' for ₹{product.price}",
+        "product": {
+            "id": product.id,
+            "name": product.name,
+            "price": product.price,
+        },
     }
 
 

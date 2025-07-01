@@ -44,6 +44,7 @@
             color: green;
         }
 
+
         #address-input {
             width: 100%;
             padding: 8px;
@@ -127,7 +128,12 @@
             }
 
             const token = localStorage.getItem("access_token");
-            const items = cart.map(item => ({ product_id: item.id, quantity: item.qty }));
+            const cart = JSON.parse(localStorage.getItem("cart") || "[]");
+
+            if (!cart.length) {
+                document.getElementById("checkout-msg").textContent = "Your cart is empty.";
+                return;
+            }
 
             try {
                 const res = await fetch("/checkout", {
@@ -136,7 +142,7 @@
                         "Content-Type": "application/json",
                         Authorization: "Bearer " + token,
                     },
-                    body: JSON.stringify({ items, address }),
+                    body: JSON.stringify({ items: cart }),
                 });
 
                 const data = await res.json();

@@ -124,10 +124,16 @@
         }
 
         async function buyProduct(id) {
+            const address = prompt("Enter delivery address:");
+            if (!address) return;
             try {
                 const res = await fetch(`/buy/${id}`, {
                     method: "POST",
-                    headers: { Authorization: "Bearer " + token }
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: "Bearer " + token
+                    },
+                    body: JSON.stringify({ address })
                 });
 
                 const data = await res.json();
