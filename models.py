@@ -2,6 +2,8 @@
 from sqlalchemy import Column, Integer, String, Float, ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
+from sqlalchemy import DateTime
+from datetime import datetime
 from pydantic import BaseModel
 from typing import List
 
@@ -33,6 +35,9 @@ class Order(Base):
     __tablename__ = "orders"
     id = Column(Integer, primary_key=True)
     buyer = Column(String)
+    address = Column(String)
+    status = Column(String, default="Pending")
+    timestamp = Column(DateTime, default=datetime.utcnow)
     items = relationship("OrderItem", back_populates="order")
 
 
