@@ -10,6 +10,7 @@
 - Add products with name, price, image, expiry time, and delivery range
 - Edit or delete products (seller only)
 - Place orders (buyer only)
+- Unique shop names for sellers
 - Forgot password feature (sends reset link to WhatsApp)
 - Clean and simple design
 
@@ -49,8 +50,25 @@
    uvicorn main:app --reload
    ```
 
-5. Open your browser and go to:  
+5. Open your browser and go to:
    [http://127.0.0.1:8000](http://127.0.0.1:8000)
+
+---
+
+## Managing Shop Names
+
+Sellers can set a unique `shop_name` for their account. Use the `/shop/name` endpoint to retrieve or update it:
+
+```bash
+# Get current shop name
+curl -H "Authorization: Bearer <token>" http://127.0.0.1:8000/shop/name
+
+# Update shop name
+curl -X POST -H "Authorization: Bearer <token>" -F name=MyStore \
+    http://127.0.0.1:8000/shop/name
+```
+
+When adding products, the seller page includes this shop name so buyers can see which store offers each item.
 
 ---
 

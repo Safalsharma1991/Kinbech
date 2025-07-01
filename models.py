@@ -17,6 +17,7 @@ class UserModel(Base):
     full_name = Column(String)
     hashed_password = Column(String)
     role = Column(String)  # Make sure it's a plain string field
+    shop_name = Column(String, unique=True)
 
 
 class Product(Base):
@@ -26,6 +27,7 @@ class Product(Base):
     description = Column(String)
     price = Column(Float)
     seller = Column(String)
+    shop_name = Column(String)
     image_url = Column(String)  # Add this line
     delivery_range_km = Column(Integer)
     expiry_datetime = Column(String)
