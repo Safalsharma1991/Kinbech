@@ -327,33 +327,6 @@ async def checkout(
     db.commit()
     return {"msg": "Order placed successfully!"}
 
-
-# This serves the HTML page
-@app.get("/my-products", response_class=HTMLResponse)
-async def serve_my_products_page():
-    return FileResponse("static/my_products.html")
-
-# This serves the product data securely
-
-
-@app.get("/api/my-products")
-async def get_my_products(current_user: dict = Depends(get_current_user_from_token), db: Session = Depends(get_db)):
-    products = db.query(DBProduct).filter(
-        DBProduct.seller == current_user["username"]).all()
-    return [
-        {
-            "id": p.id,
-            "name": p.name,
-            "description": p.description,
-            "price": p.price,
-            "image_urls": p.image_url.split(","),
-            "delivery_range_km": p.delivery_range_km,
-            "expiry_datetime": p.expiry_datetime,
-        }
-        for p in products
-    ]
-
-
 @app.delete("/products/{product_id}")
 async def delete_product(product_id: int, current_user: dict = Depends(get_current_user_from_token), db: Session = Depends(get_db)):
     product = db.query(DBProduct).filter(
