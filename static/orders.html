@@ -64,6 +64,7 @@
               ${order.items.map(item => `
                 ${item.name} x${item.quantity} - ₹${(item.price * item.quantity).toFixed(2)}<br/>
               `).join("")}
+              Address: ${order.address}<br/>
               <strong>Total: ₹${order.total.toFixed(2)}</strong><br/>
               Status: <span class="${order.status === 'Fulfilled' ? 'fulfilled' : ''}">${order.status}</span><br/>
               ${order.status !== "Fulfilled" ? `<button onclick="markFulfilled(${order.id})">Mark as Fulfilled</button>` : ""}

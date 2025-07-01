@@ -44,6 +44,14 @@
             color: green;
         }
 
+
+        #address-input {
+            width: 100%;
+            padding: 8px;
+            margin-top: 10px;
+            box-sizing: border-box;
+        }
+
     </style>
 </head>
 
@@ -62,6 +70,7 @@
         <tbody></tbody>
     </table>
     <p id="total"></p>
+    <textarea id="address-input" placeholder="Enter delivery address" rows="3"></textarea>
     <button onclick="placeOrder()">Place Order</button>
     <button onclick="goBack()">Back to Products</button>
 
@@ -112,11 +121,19 @@
         async function placeOrder() {
             if (cart.length === 0) return alert("Your cart is empty.");
 
-            const address = prompt("Enter delivery address:");
-            if (!address) return;
+            const address = document.getElementById("address-input").value.trim();
+            if (!address) {
+                alert("Please enter delivery address.");
+                return;
+            }
 
             const token = localStorage.getItem("access_token");
-            const items = cart.map(item => ({ product_id: item.id, quantity: item.qty }));
+            const cart = JSON.parse(localStorage.getItem("cart") || "[]");
+
+            if (!cart.length) {
+                document.getElementById("checkout-msg").textContent = "Your cart is empty.";
+                return;
+            }
 
             try {
                 const res = await fetch("/checkout", {
@@ -125,7 +142,7 @@
                         "Content-Type": "application/json",
                         Authorization: "Bearer " + token,
                     },
-                    body: JSON.stringify({ items, address }),
+                    body: JSON.stringify({ items: cart }),
                 });
 
                 const data = await res.json();
@@ -133,6 +150,7 @@
 
                 localStorage.removeItem("cart");
                 cart = [];
+                document.getElementById("address-input").value = "";
                 document.getElementById("message").style.color = "green";
                 document.getElementById("message").textContent = data.msg || "Order placed successfully!";
                 renderCart();
