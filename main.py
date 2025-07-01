@@ -11,7 +11,7 @@ import json
 import os
 from sqlalchemy.orm import Session
 from models import Base, Order, OrderItem, UserModel as DBUser, Product as DBProduct
-from database import Base, engine, SessionLocal
+from database import engine, SessionLocal
 from sqlalchemy.exc import SQLAlchemyError
 from fastapi import UploadFile, File, Form
 from fastapi.responses import HTMLResponse
@@ -49,7 +49,7 @@ users_db: Dict[str, dict] = {}
 products = []
 product_id_counter = 1
 
-Base.metadata.create_all(bind=engine)
+
 
 
 class UserCreate(BaseModel):
