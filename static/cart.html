@@ -128,7 +128,7 @@
             }
 
             const token = localStorage.getItem("access_token");
-            const cart = JSON.parse(localStorage.getItem("cart") || "[]");
+            cart = JSON.parse(localStorage.getItem("cart") || "[]");
 
             if (!cart.length) {
                 document.getElementById("checkout-msg").textContent = "Your cart is empty.";
