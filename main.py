@@ -526,13 +526,6 @@ def register_form(request: Request):
     return templates.TemplateResponse("register.html", {"request": request})
 
 
-@app.post("/register")
-def register_user(username: str = Form(...), password: str = Form(...), full_name: str = Form(...)):
-    # TODO: Add logic to save the user to your database
-    print(f"Registered: {username}, {full_name}")
-    return RedirectResponse(url="/login", status_code=303)
-
-
 @app.post("/send-reset-link")
 async def send_reset_link(payload: ResetRequest):
     # Generate unique token
