@@ -221,6 +221,31 @@ def set_shop_name(name: str = Form(...), current_user: dict = Depends(get_curren
     return {"shop_name": user.shop_name}
 
 
+@app.get("/seller/details")
+def get_seller_details(current_user: dict = Depends(get_current_user_from_token), db: Session = Depends(get_db)):
+    user = db.query(DBUser).filter(DBUser.username == current_user["username"]).first()
+    return {
+        "address": user.address if user and user.address else "",
+        "phone_number": user.phone_number if user and user.phone_number else "",
+    }
+
+
+@app.post("/seller/details")
+def update_seller_details(
+    address: str = Form(None),
+    phone_number: str = Form(None),
+    current_user: dict = Depends(get_current_user_from_token),
+    db: Session = Depends(get_db),
+):
+    user = db.query(DBUser).filter(DBUser.username == current_user["username"]).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    user.address = address
+    user.phone_number = phone_number
+    db.commit()
+    return {"address": user.address, "phone_number": user.phone_number}
+
+
 @app.post("/products")
 async def create_product(
     name: str = Form(...),
