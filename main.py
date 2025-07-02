@@ -339,8 +339,7 @@ async def get_products(
 
     db_products = db.query(DBProduct).filter(DBProduct.is_validated == True).all()
 
-    return [
-        {
+    return
 
 
     """Return all validated products for the marketplace."""
