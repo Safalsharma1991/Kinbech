@@ -337,14 +337,9 @@ async def get_products(
     db: Session = Depends(get_db),
 ):
 
-    db_products = db.query(DBProduct).filter(DBProduct.is_validated == True).all()
-
-    return [
-        {
-
-
     """Return all validated products for the marketplace."""
 
+    db_products = db.query(DBProduct).filter(DBProduct.is_validated == True).all()
 
     products = []
     for p in db_products:
