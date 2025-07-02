@@ -11,6 +11,8 @@ This file tracks future work for the RangeCart project.
 - [ ] Implement real WhatsApp or email integration to send reset links.
 
 ## Other Improvements
+
 - [x] Automatically remove expired products with a background job.
+
 - [ ] Write tests for admin and seller endpoints.
 - [ ] Add notifications for buyers when orders are fulfilled.
