@@ -7,12 +7,15 @@ from fastapi import (
     Form,
     Request,
     Body,
-    APIRouter,
+    UploadFile,
+    File,
 )
-from fastapi.responses import FileResponse, JSONResponse
-
-from fastapi import FastAPI, HTTPException, Depends, status, Form, Request, Body
-from fastapi.responses import FileResponse
+from fastapi.responses import (
+    FileResponse,
+    JSONResponse,
+    HTMLResponse,
+    RedirectResponse,
+)
 
 from fastapi.staticfiles import StaticFiles
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
@@ -25,14 +28,9 @@ import json
 import os
 from sqlalchemy.orm import Session
 from models import Base, Order, OrderItem, UserModel as DBUser, Product as DBProduct
-from database import engine, SessionLocal
-from fastapi import UploadFile, File
-from fastapi.responses import HTMLResponse
-from models import Product, UserModel as User
+from database import engine, get_db
 from schemas import ProductOut
-from database import get_db
 from fastapi.templating import Jinja2Templates
-from fastapi.responses import RedirectResponse
 import uuid
 
 app = FastAPI()
@@ -135,14 +133,6 @@ def authenticate_user(db: Session, username: str, password: str):
     if user and verify_password(password, user.hashed_password):
         return user
     return None
-
-
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
 
 def get_current_user_from_token(
@@ -323,10 +313,20 @@ async def get_products(
     current_user: dict = Depends(get_current_user_from_token),
     db: Session = Depends(get_db),
 ):
+
     db_products = db.query(DBProduct).filter(DBProduct.is_validated == True).all()
 
     return [
         {
+
+
+    """Return all validated products for the marketplace."""
+
+
+    products = []
+    for p in db_products:
+        item = {
+
             "id": p.id,
             "name": p.name,
             "description": p.description,
@@ -337,8 +337,13 @@ async def get_products(
             "delivery_range_km": p.delivery_range_km,
             "expiry_datetime": p.expiry_datetime,
         }
-        for p in db_products
-    ]
+
+        if "admin" in current_user["role"]:
+            item["shop_name"] = p.shop_name
+        products.append(item)
+
+    return products
+
 
 
 @app.post("/buy/{product_id}")
@@ -454,6 +459,7 @@ async def get_my_products(
     current_user: dict = Depends(get_current_user_from_token),
     db: Session = Depends(get_db),
 ):
+
     products = db.query(DBProduct).filter(
         DBProduct.seller == current_user["username"]).all()
     out = []
@@ -606,7 +612,8 @@ def get_product(
     }
 
 
-templates = Jinja2Templates(directory="templates")  # Update path if needed
+# Load HTML templates from the same directory as other static files
+templates = Jinja2Templates(directory="static")
 
 
 @app.get("/forgot-password", response_class=HTMLResponse)
