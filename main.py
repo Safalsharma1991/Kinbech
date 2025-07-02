@@ -460,7 +460,6 @@ async def my_products_page():
 
 @app.get("/api/my-products")
  {
-=======
 async def get_my_products(current_user: dict = Depends(get_current_user_from_token), db: Session = Depends(get_db)):
     products = db.query(DBProduct).filter(
         DBProduct.seller == current_user["username"]).all()
