@@ -1,5 +1,19 @@
+
+from fastapi import (
+    FastAPI,
+    HTTPException,
+    Depends,
+    status,
+    Form,
+    Request,
+    Body,
+    APIRouter,
+)
+from fastapi.responses import FileResponse, JSONResponse
+
 from fastapi import FastAPI, HTTPException, Depends, status, Form, Request, Body
 from fastapi.responses import FileResponse
+
 from fastapi.staticfiles import StaticFiles
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from pydantic import BaseModel
@@ -32,6 +46,7 @@ Base.metadata.create_all(bind=engine)
 async def root():
     return FileResponse("static/index.html")
 
+
 # JWT settings
 SECRET_KEY = "secretkey"
 ALGORITHM = "HS256"
@@ -39,6 +54,12 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
 # Password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+
+
+products = []
+product_id_counter = 1
+
 
 
 class UserCreate(BaseModel):
@@ -98,7 +119,9 @@ def verify_password(plain, hashed):
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     to_encode = data.copy()
-    expire = datetime.utcnow() + (expires_delta or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
+    expire = datetime.utcnow() + (
+        expires_delta or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    )
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
@@ -138,7 +161,7 @@ def get_current_user_from_token(
         return {
             "username": user.username,
             "full_name": user.full_name,
-            "role": user.role.split(",")
+            "role": user.role.split(","),
         }
     except JWTError:
         raise HTTPException(status_code=401, detail="Invalid token")
@@ -146,20 +169,20 @@ def get_current_user_from_token(
 
 @app.post("/register", status_code=201)
 async def register(user: UserCreate, db: Session = Depends(get_db)):
-    existing = db.query(DBUser).filter(
-        DBUser.username == user.username).first()
+    existing = db.query(DBUser).filter(DBUser.username == user.username).first()
     if existing:
-        raise HTTPException(
-            status_code=400, detail="Username already registered")
+        raise HTTPException(status_code=400, detail="Username already registered")
 
     hashed_password = get_password_hash(user.password)
     db_user = DBUser(
         username=user.username,
         full_name=user.full_name,
         hashed_password=hashed_password,
+
         role=",".join(user.role),
         address=user.address,
         phone=user.phone,
+
     )
     db.add(db_user)
     db.commit()
@@ -168,11 +191,12 @@ async def register(user: UserCreate, db: Session = Depends(get_db)):
 
 
 @app.post("/token", response_model=Token)
-async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+async def login(
+    form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)
+):
     user = authenticate_user(db, form_data.username, form_data.password)
     if not user:
-        raise HTTPException(
-            status_code=400, detail="Incorrect username or password")
+        raise HTTPException(status_code=400, detail="Incorrect username or password")
     access_token = create_access_token(data={"sub": user.username})
     return {"access_token": access_token, "token_type": "bearer"}
 
@@ -198,18 +222,25 @@ async def read_profile(current_user: dict = Depends(get_current_user_from_token)
     return {
         "username": current_user["username"],
         "full_name": current_user["full_name"],
-        "role": current_user["role"]  # ✅ already a list
+        "role": current_user["role"],  # ✅ already a list
     }
 
 
 @app.get("/shop/name")
-def get_shop_name(current_user: dict = Depends(get_current_user_from_token), db: Session = Depends(get_db)):
+def get_shop_name(
+    current_user: dict = Depends(get_current_user_from_token),
+    db: Session = Depends(get_db),
+):
     user = db.query(DBUser).filter(DBUser.username == current_user["username"]).first()
     return {"shop_name": user.shop_name if user and user.shop_name else ""}
 
 
 @app.post("/shop/name")
-def set_shop_name(name: str = Form(...), current_user: dict = Depends(get_current_user_from_token), db: Session = Depends(get_db)):
+def set_shop_name(
+    name: str = Form(...),
+    current_user: dict = Depends(get_current_user_from_token),
+    db: Session = Depends(get_db),
+):
     user = db.query(DBUser).filter(DBUser.username == current_user["username"]).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
@@ -256,7 +287,7 @@ async def create_product(
     shop_name: str = Form(...),
     images: List[UploadFile] = File(...),
     current_user: dict = Depends(get_current_user_from_token),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     # ✅ Create directory if it doesn't exist
     os.makedirs("static/uploads", exist_ok=True)
@@ -288,7 +319,11 @@ async def create_product(
 
 
 @app.get("/products")
-async def get_products(current_user: dict = Depends(get_current_user_from_token), db: Session = Depends(get_db)):
+
+async def get_products(
+    current_user: dict = Depends(get_current_user_from_token),
+    db: Session = Depends(get_db),
+):
 
     db_products = db.query(DBProduct).all()
     products = []
@@ -323,8 +358,7 @@ async def buy_product(
     db: Session = Depends(get_db),
 ):
     if "buyer" not in current_user["role"]:
-        raise HTTPException(
-            status_code=403, detail="Only buyers can purchase products")
+        raise HTTPException(status_code=403, detail="Only buyers can purchase products")
 
     product = db.query(DBProduct).filter(DBProduct.id == product_id).first()
     if not product:
@@ -351,7 +385,7 @@ async def buy_product(
 async def checkout(
     request: CheckoutRequest,
     current_user: dict = Depends(get_current_user_from_token),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     order = Order(
         buyer=current_user["username"],
@@ -361,16 +395,29 @@ async def checkout(
     db.flush()  # Get order.id
 
     for item in request.items:
-        db.add(OrderItem(order_id=order.id,
-               product_id=item.product_id, quantity=item.quantity))
+        db.add(
+            OrderItem(
+                order_id=order.id, product_id=item.product_id, quantity=item.quantity
+            )
+        )
 
     db.commit()
     return {"msg": "Order placed successfully!"}
 
+
 @app.delete("/products/{product_id}")
-async def delete_product(product_id: int, current_user: dict = Depends(get_current_user_from_token), db: Session = Depends(get_db)):
-    product = db.query(DBProduct).filter(
-        DBProduct.id == product_id, DBProduct.seller == current_user["username"]).first()
+async def delete_product(
+    product_id: int,
+    current_user: dict = Depends(get_current_user_from_token),
+    db: Session = Depends(get_db),
+):
+    product = (
+        db.query(DBProduct)
+        .filter(
+            DBProduct.id == product_id, DBProduct.seller == current_user["username"]
+        )
+        .first()
+    )
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
     db.delete(product)
@@ -383,10 +430,15 @@ async def update_product(
     product_id: int,
     data: dict = Body(...),
     db: Session = Depends(get_db),
-    current_user: dict = Depends(get_current_user_from_token)
+    current_user: dict = Depends(get_current_user_from_token),
 ):
-    product = db.query(DBProduct).filter(
-        DBProduct.id == product_id, DBProduct.seller == current_user["username"]).first()
+    product = (
+        db.query(DBProduct)
+        .filter(
+            DBProduct.id == product_id, DBProduct.seller == current_user["username"]
+        )
+        .first()
+    )
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
 
@@ -402,16 +454,20 @@ async def update_product(
 async def my_products_page():
     return FileResponse("static/my_products.html")
 
+
 # ✅ Actual product data requires auth
 
 
 @app.get("/api/my-products")
+ {
+=======
 async def get_my_products(current_user: dict = Depends(get_current_user_from_token), db: Session = Depends(get_db)):
     products = db.query(DBProduct).filter(
         DBProduct.seller == current_user["username"]).all()
     out = []
     for p in products:
         item = {
+
             "id": p.id,
             "name": p.name,
             "description": p.description,
@@ -427,29 +483,47 @@ async def get_my_products(current_user: dict = Depends(get_current_user_from_tok
 
 
 @app.get("/seller/orders")
-def get_seller_orders(current_user: dict = Depends(get_current_user_from_token), db: Session = Depends(get_db)):
+def get_seller_orders(
+    current_user: dict = Depends(get_current_user_from_token),
+    db: Session = Depends(get_db),
+):
     username = current_user["username"]
 
-    orders = db.query(Order).join(OrderItem).join(
-        DBProduct).filter(DBProduct.seller == username).all()
+    orders = (
+        db.query(Order)
+        .join(OrderItem)
+        .join(DBProduct)
+        .filter(DBProduct.seller == username)
+        .all()
+    )
 
-    return [{
-        "id": order.id,
-        "buyer": order.buyer,
-        "address": order.address,
-        "items": [{
-            "name": item.product.name,
-            "price": item.product.price,
-            "quantity": item.quantity,
-        } for item in order.items],
-        "total": sum(item.product.price * item.quantity for item in order.items),
-        "timestamp": order.timestamp.isoformat(),
-        "status": order.status
-    } for order in orders]
+    return [
+        {
+            "id": order.id,
+            "buyer": order.buyer,
+            "address": order.address,
+            "items": [
+                {
+                    "name": item.product.name,
+                    "price": item.product.price,
+                    "quantity": item.quantity,
+                }
+                for item in order.items
+            ],
+            "total": sum(item.product.price * item.quantity for item in order.items),
+            "timestamp": order.timestamp.isoformat(),
+            "status": order.status,
+        }
+        for order in orders
+    ]
 
 
 @app.post("/seller/orders/{order_id}/fulfill")
-def mark_order_fulfilled(order_id: int, current_user: dict = Depends(get_current_user_from_token), db: Session = Depends(get_db)):
+def mark_order_fulfilled(
+    order_id: int,
+    current_user: dict = Depends(get_current_user_from_token),
+    db: Session = Depends(get_db),
+):
     order = db.query(Order).filter(Order.id == order_id).first()
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
@@ -465,17 +539,27 @@ def mark_order_fulfilled(order_id: int, current_user: dict = Depends(get_current
 
 
 @app.get("/buyer/notifications")
-def get_notifications(current_user: dict = Depends(get_current_user_from_token), db: Session = Depends(get_db)):
+def get_notifications(
+    current_user: dict = Depends(get_current_user_from_token),
+    db: Session = Depends(get_db),
+):
     username = current_user["username"]
 
-    orders = db.query(Order).filter(Order.buyer == username).order_by(
-        Order.timestamp.desc()).all()
+    orders = (
+        db.query(Order)
+        .filter(Order.buyer == username)
+        .order_by(Order.timestamp.desc())
+        .all()
+    )
 
-    return [{
-        "id": o.id,
-        "status": o.status,
-        "timestamp": o.timestamp.isoformat(),
-    } for o in orders]
+    return [
+        {
+            "id": o.id,
+            "status": o.status,
+            "timestamp": o.timestamp.isoformat(),
+        }
+        for o in orders
+    ]
 
 
 @app.get("/admin/sellers")
@@ -508,10 +592,14 @@ def get_product(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user_from_token),
 ):
-    product = db.query(DBProduct).filter(
-        DBProduct.id == product_id,
-        DBProduct.seller == current_user["username"],
-    ).first()
+    product = (
+        db.query(DBProduct)
+        .filter(
+            DBProduct.id == product_id,
+            DBProduct.seller == current_user["username"],
+        )
+        .first()
+    )
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
     return {
@@ -535,25 +623,11 @@ async def forgot_password_page(request: Request):
 
 
 @app.post("/forgot-password")
-async def forgot_password_submit(username: str = Form(...)):
+async def process_forgot_password(email: str = Form(...)):
     # TODO: Implement actual reset logic or email link
-    print(f"Password reset requested for user: {username}")
-    # For now, just redirect back to login with a dummy message
-    return RedirectResponse("/", status_code=302)
-
-
-@app.get("/forgot-password", response_class=HTMLResponse)
-def forgot_password_form(request: Request):
-    return templates.TemplateResponse("forgot_password.html", {"request": request})
-
-
-@app.post("/forgot-password")
-def process_forgot_password(email: str = Form(...)):
-    # Here, add logic to:
     # 1. Verify email exists
-    # 2. Create a reset token (we’ll do this in step 5)
-    # 3. Send a reset email (or just show a message for now)
-
+    # 2. Create a reset token
+    # 3. Send a reset email or message
     print(f"Password reset link requested for: {email}")
     return RedirectResponse(url="/login", status_code=303)
 
