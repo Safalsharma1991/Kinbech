@@ -715,3 +715,17 @@ def admin_delete_product(product_id: int, current_user: dict = Depends(get_curre
     db.delete(product)
     db.commit()
     return {"msg": "Product deleted"}
+
+
+# ------- Admin Frontend Pages -------
+
+@app.get("/admin", include_in_schema=False)
+async def admin_dashboard_page():
+    """Serve the admin dashboard HTML."""
+    return FileResponse("static/admin_dashboard.html")
+
+
+@app.get("/admin/sellers/page", include_in_schema=False)
+async def admin_sellers_page():
+    """Serve the seller list HTML for admins."""
+    return FileResponse("static/admin_sellers.html")

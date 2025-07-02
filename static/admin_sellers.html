@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Seller List</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 700px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+        h2 {
+            text-align: center;
+        }
+        .seller {
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 8px;
+        }
+        a {
+            display: inline-block;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <a href="/static/admin_dashboard.html">&larr; Back to Dashboard</a>
+    <h2>Registered Sellers</h2>
+    <div id="seller-list">Loading...</div>
+
+    <script>
+        const token = localStorage.getItem('access_token');
+        async function loadSellers() {
+            const res = await fetch('/admin/sellers', {
+                headers: { Authorization: 'Bearer ' + token }
+            });
+            if (!res.ok) {
+                document.getElementById('seller-list').innerHTML = 'Error loading sellers.';
+                return;
+            }
+            const data = await res.json();
+            const list = document.getElementById('seller-list');
+            list.innerHTML = '';
+            if (data.length === 0) {
+                list.innerHTML = '<p>No sellers found.</p>';
+                return;
+            }
+            data.forEach(s => {
+                const item = document.createElement('div');
+                item.className = 'seller';
+                item.innerHTML = `
+                    <strong>${s.username}</strong><br>
+                    Shop: ${s.shop_name || '-'}<br>
+                    Address: ${s.address || '-'}<br>
+                    Phone: ${s.phone_number || '-'}
+                `;
+                list.appendChild(item);
+            });
+        }
+        loadSellers();
+    </script>
+</body>
+</html>
