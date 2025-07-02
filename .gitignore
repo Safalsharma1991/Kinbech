@@ -3,6 +3,5 @@ __pycache__/
 
 codex/implement-admin-role-and-endpoints
 test.db
-=======
 *.db
 main
