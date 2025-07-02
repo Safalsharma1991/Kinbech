@@ -7,12 +7,15 @@ from fastapi import (
     Form,
     Request,
     Body,
-    APIRouter,
+    UploadFile,
+    File,
 )
-from fastapi.responses import FileResponse, JSONResponse
-
-from fastapi import FastAPI, HTTPException, Depends, status, Form, Request, Body
-from fastapi.responses import FileResponse
+from fastapi.responses import (
+    FileResponse,
+    JSONResponse,
+    HTMLResponse,
+    RedirectResponse,
+)
 
 from fastapi.staticfiles import StaticFiles
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
@@ -25,14 +28,9 @@ import json
 import os
 from sqlalchemy.orm import Session
 from models import Base, Order, OrderItem, UserModel as DBUser, Product as DBProduct
-from database import engine, SessionLocal
-from fastapi import UploadFile, File
-from fastapi.responses import HTMLResponse
-from models import Product, UserModel as User
+from database import engine, get_db
 from schemas import ProductOut
-from database import get_db
 from fastapi.templating import Jinja2Templates
-from fastapi.responses import RedirectResponse
 import uuid
 
 app = FastAPI()
@@ -135,14 +133,6 @@ def authenticate_user(db: Session, username: str, password: str):
     if user and verify_password(password, user.hashed_password):
         return user
     return None
-
-
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
 
 def get_current_user_from_token(
