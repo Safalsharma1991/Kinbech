@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 40px auto;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+        }
+        h2 {
+            text-align: center;
+        }
+        input, select {
+            width: 100%;
+            padding: 8px;
+            margin: 6px 0;
+            box-sizing: border-box;
+        }
+        button {
+            padding: 10px 16px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #msg {
+            margin-top: 10px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h2>Admin Dashboard</h2>
+    <h3>Onboard New User</h3>
+    <input type="text" id="username" placeholder="Username" />
+    <input type="text" id="full_name" placeholder="Full Name" />
+    <input type="password" id="password" placeholder="Password" />
+    <select id="roles" multiple>
+        <option value="buyer">Buyer</option>
+        <option value="seller">Seller</option>
+        <option value="admin">Admin</option>
+    </select>
+    <button onclick="createUser()">Create User</button>
+    <p id="msg"></p>
+    <div style="margin-top:20px; display:flex; justify-content: space-between;">
+        <button onclick="goToProfile()">Back</button>
+        <button onclick="logout()" style="background-color:red;">Logout</button>
+    </div>
+    <script>
+        const token = localStorage.getItem("access_token");
+        if(!token){
+            window.location.href = "/static/index.html";
+        }
+        async function createUser(){
+            const payload = {
+                username: document.getElementById('username').value.trim(),
+                full_name: document.getElementById('full_name').value.trim(),
+                password: document.getElementById('password').value,
+                role: Array.from(document.getElementById('roles').selectedOptions).map(o=>o.value)
+            };
+            document.getElementById('msg').textContent = '';
+            const res = await fetch('/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            if(res.ok){
+                document.getElementById('msg').textContent = data.msg;
+                document.getElementById('msg').style.color = 'green';
+            }else{
+                document.getElementById('msg').textContent = data.detail || 'Error';
+                document.getElementById('msg').style.color = 'red';
+            }
+        }
+        function logout(){
+            localStorage.removeItem('access_token');
+            window.location.href = '/static/index.html';
+        }
+        function goToProfile(){
+            window.location.href = '/static/profile.html';
+        }
+    </script>
+</body>
+</html>
