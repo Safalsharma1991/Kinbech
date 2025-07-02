@@ -5,3 +5,4 @@ codex/implement-admin-role-and-endpoints
 test.db
 *.db
 main
+static/uploads/

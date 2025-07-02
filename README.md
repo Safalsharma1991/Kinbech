@@ -118,8 +118,7 @@ RangeCart/
 │
 ├── main.py           # Main FastAPI backend
 ├── models.py         # Data models (User, Product, etc.)
-├── templates/        # HTML files (Jinja2)
-├── static/           # Frontend files
+├── static/           # Frontend files and HTML templates
 ├── database.py       # Database setup
 ├── requirements.txt  # Required packages
 ```
