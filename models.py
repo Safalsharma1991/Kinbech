@@ -18,6 +18,8 @@ class UserModel(Base):
     hashed_password = Column(String)
     role = Column(String)  # Make sure it's a plain string field
     shop_name = Column(String, unique=True)
+    address = Column(String)
+    phone = Column(String)
 
 
 class Product(Base):

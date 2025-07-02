@@ -1,5 +1,5 @@
-from fastapi import FastAPI, HTTPException, Depends, status, Form, Request, Body, APIRouter
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi import FastAPI, HTTPException, Depends, status, Form, Request, Body
+from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from pydantic import BaseModel
@@ -12,15 +12,13 @@ import os
 from sqlalchemy.orm import Session
 from models import Base, Order, OrderItem, UserModel as DBUser, Product as DBProduct
 from database import engine, SessionLocal
-from sqlalchemy.exc import SQLAlchemyError
-from fastapi import UploadFile, File, Form
+from fastapi import UploadFile, File
 from fastapi.responses import HTMLResponse
 from models import Product, UserModel as User
 from schemas import ProductOut
 from database import get_db
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import RedirectResponse
-from pydantic import BaseModel
 import uuid
 
 app = FastAPI()
@@ -42,14 +40,14 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 60
 # Password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-# Simulated in-memory user DB
-users_db: Dict[str, dict] = {}
 
 class UserCreate(BaseModel):
     username: str
     full_name: Optional[str] = None
     password: str
-    role: list[str]
+    role: list[str] = ["buyer", "seller"]
+    address: Optional[str] = None
+    phone: Optional[str] = None
 
 
 class Token(BaseModel):
@@ -159,7 +157,9 @@ async def register(user: UserCreate, db: Session = Depends(get_db)):
         username=user.username,
         full_name=user.full_name,
         hashed_password=hashed_password,
-        role="buyer,seller"  # ✅ hardcoded
+        role=",".join(user.role),
+        address=user.address,
+        phone=user.phone,
     )
     db.add(db_user)
     db.commit()
@@ -264,21 +264,22 @@ async def create_product(
 @app.get("/products")
 async def get_products(current_user: dict = Depends(get_current_user_from_token), db: Session = Depends(get_db)):
     db_products = db.query(DBProduct).all()
-
-    return [
-        {
+    products = []
+    for p in db_products:
+        item = {
             "id": p.id,
             "name": p.name,
             "description": p.description,
             "price": p.price,
             "seller": p.seller,
-            "shop_name": p.shop_name,
             "image_urls": p.image_url.split(","),
             "delivery_range_km": p.delivery_range_km,
             "expiry_datetime": p.expiry_datetime,
         }
-        for p in db_products
-    ]
+        if "admin" in current_user["role"]:
+            item["shop_name"] = p.shop_name
+        products.append(item)
+    return products
 
 
 @app.post("/buy/{product_id}")
@@ -373,19 +374,21 @@ async def my_products_page():
 async def get_my_products(current_user: dict = Depends(get_current_user_from_token), db: Session = Depends(get_db)):
     products = db.query(DBProduct).filter(
         DBProduct.seller == current_user["username"]).all()
-    return [
-        {
+    out = []
+    for p in products:
+        item = {
             "id": p.id,
             "name": p.name,
             "description": p.description,
             "price": p.price,
-            "shop_name": p.shop_name,
             "image_urls": p.image_url.split(","),
             "delivery_range_km": p.delivery_range_km,
             "expiry_datetime": p.expiry_datetime,
         }
-        for p in products
-    ]
+        if "admin" in current_user["role"]:
+            item["shop_name"] = p.shop_name
+        out.append(item)
+    return out
 
 
 @app.get("/seller/orders")
@@ -438,6 +441,30 @@ def get_notifications(current_user: dict = Depends(get_current_user_from_token),
         "status": o.status,
         "timestamp": o.timestamp.isoformat(),
     } for o in orders]
+
+
+@app.get("/admin/sellers")
+def list_sellers(
+    current_user: dict = Depends(get_current_user_from_token),
+    db: Session = Depends(get_db),
+):
+    if "admin" not in current_user["role"]:
+        raise HTTPException(status_code=403, detail="Admins only")
+
+    sellers = (
+        db.query(DBUser)
+        .filter(DBUser.role.like("%seller%"))
+        .all()
+    )
+    return [
+        {
+            "username": s.username,
+            "shop_name": s.shop_name,
+            "address": s.address,
+            "phone": s.phone,
+        }
+        for s in sellers
+    ]
 
 
 @app.get("/products/{product_id}", response_model=ProductOut)

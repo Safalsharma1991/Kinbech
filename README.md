@@ -72,6 +72,27 @@ When adding products, the seller page includes this shop name so buyers can see 
 
 ---
 
+## Admin Users
+
+Create an admin account by sending a role of `"admin"` when registering:
+
+```bash
+curl -X POST -H "Content-Type: application/json" \
+     -d '{"username": "admin", "password": "secret", "role": ["admin"]}' \
+     http://127.0.0.1:8000/register
+```
+
+Admins can list all sellers using:
+
+```bash
+curl -H "Authorization: Bearer <token>" \
+     http://127.0.0.1:8000/admin/sellers
+```
+
+The response includes each seller's username, shop name, address and phone number.
+
+---
+
 ## Folder Info
 
 ```
