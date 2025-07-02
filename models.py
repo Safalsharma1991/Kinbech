@@ -1,5 +1,5 @@
 # models.py
-from sqlalchemy import Column, Integer, String, Float, ForeignKey
+from sqlalchemy import Column, Integer, String, Float, ForeignKey, Boolean
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy import DateTime
@@ -29,6 +29,7 @@ class Product(Base):
     seller = Column(String)
     shop_name = Column(String)
     image_url = Column(String)  # Add this line
+    is_validated = Column(Boolean, default=False)
     delivery_range_km = Column(Integer)
     expiry_datetime = Column(String)
 

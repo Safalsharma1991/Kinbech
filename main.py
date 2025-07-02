@@ -251,6 +251,7 @@ async def create_product(
         seller=current_user["username"],
         shop_name=shop_name,
         image_url=",".join(image_urls),
+        is_validated=False,
         delivery_range_km=delivery_range_km,
         expiry_datetime=expiry_datetime,
     )
@@ -263,7 +264,7 @@ async def create_product(
 
 @app.get("/products")
 async def get_products(current_user: dict = Depends(get_current_user_from_token), db: Session = Depends(get_db)):
-    db_products = db.query(DBProduct).all()
+    db_products = db.query(DBProduct).filter(DBProduct.is_validated == True).all()
 
     return [
         {
@@ -295,6 +296,8 @@ async def buy_product(
     product = db.query(DBProduct).filter(DBProduct.id == product_id).first()
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
+    if not product.is_validated:
+        raise HTTPException(status_code=403, detail="Product not validated")
     order = Order(buyer=current_user["username"], address=address)
     db.add(order)
     db.flush()
@@ -513,3 +516,52 @@ async def send_reset_link(payload: ResetRequest):
     print(f"Send this link via WhatsApp: {reset_link} to {payload.number}")
 
     return {"msg": "Reset link sent to your WhatsApp!"}
+
+
+# --- Admin Product Validation Endpoints ---
+
+def require_admin(current_user: dict):
+    if "admin" not in current_user["role"]:
+        raise HTTPException(status_code=403, detail="Admin access required")
+
+
+@app.get("/admin/products/pending")
+def list_pending_products(current_user: dict = Depends(get_current_user_from_token), db: Session = Depends(get_db)):
+    require_admin(current_user)
+    products = db.query(DBProduct).filter(DBProduct.is_validated == False).all()
+    return [
+        {
+            "id": p.id,
+            "name": p.name,
+            "description": p.description,
+            "price": p.price,
+            "seller": p.seller,
+            "shop_name": p.shop_name,
+            "image_urls": p.image_url.split(","),
+            "delivery_range_km": p.delivery_range_km,
+            "expiry_datetime": p.expiry_datetime,
+        }
+        for p in products
+    ]
+
+
+@app.post("/admin/products/{product_id}/validate")
+def validate_product(product_id: int, current_user: dict = Depends(get_current_user_from_token), db: Session = Depends(get_db)):
+    require_admin(current_user)
+    product = db.query(DBProduct).filter(DBProduct.id == product_id).first()
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+    product.is_validated = True
+    db.commit()
+    return {"msg": "Product validated"}
+
+
+@app.delete("/admin/products/{product_id}")
+def admin_delete_product(product_id: int, current_user: dict = Depends(get_current_user_from_token), db: Session = Depends(get_db)):
+    require_admin(current_user)
+    product = db.query(DBProduct).filter(DBProduct.id == product_id).first()
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+    db.delete(product)
+    db.commit()
+    return {"msg": "Product deleted"}
