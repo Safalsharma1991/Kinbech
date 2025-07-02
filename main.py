@@ -171,7 +171,7 @@ async def register(user: UserCreate, db: Session = Depends(get_db)):
 
         role=",".join(user.role),
         address=user.address,
-        phone=user.phone,
+        phone_number=user.phone,
 
     )
     db.add(db_user)
@@ -316,26 +316,34 @@ async def get_products(
 
     db_products = db.query(DBProduct).filter(DBProduct.is_validated == True).all()
 
+    return [
+        {
+
+
     """Return all validated products for the marketplace."""
 
 
     products = []
     for p in db_products:
         item = {
+
             "id": p.id,
             "name": p.name,
             "description": p.description,
             "price": p.price,
             "seller": p.seller,
+            "shop_name": p.shop_name,
             "image_urls": p.image_url.split(","),
             "delivery_range_km": p.delivery_range_km,
             "expiry_datetime": p.expiry_datetime,
         }
+
         if "admin" in current_user["role"]:
             item["shop_name"] = p.shop_name
         products.append(item)
 
     return products
+
 
 
 @app.post("/buy/{product_id}")
@@ -447,7 +455,6 @@ async def my_products_page():
 
 
 @app.get("/api/my-products")
-
 async def get_my_products(
     current_user: dict = Depends(get_current_user_from_token),
     db: Session = Depends(get_db),
@@ -571,7 +578,7 @@ def list_sellers(
             "username": s.username,
             "shop_name": s.shop_name,
             "address": s.address,
-            "phone": s.phone,
+            "phone_number": s.phone_number,
         }
         for s in sellers
     ]
