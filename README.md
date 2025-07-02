@@ -70,6 +70,24 @@ curl -X POST -H "Authorization: Bearer <token>" -F name=MyStore \
 
 When adding products, the seller page includes this shop name so buyers can see which store offers each item.
 
+### Updating Seller Contact Details
+
+Sellers can store an optional address and phone number using the `/seller/details` endpoints:
+
+```bash
+# View saved details
+curl -H "Authorization: Bearer <token>" http://127.0.0.1:8000/seller/details
+
+# Update address and phone
+curl -X POST \
+  -H "Authorization: Bearer <token>" \
+  -F address="123 Market St" \
+  -F phone_number="9876543210" \
+  http://127.0.0.1:8000/seller/details
+```
+
+These values appear on the seller dashboard where they can be edited anytime.
+
 ---
 
 ## Folder Info
