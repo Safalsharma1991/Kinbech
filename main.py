@@ -78,11 +78,6 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 
-products = []
-product_id_counter = 1
-
-
-
 class UserCreate(BaseModel):
     username: str
     full_name: Optional[str] = None
