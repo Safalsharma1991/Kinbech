@@ -313,11 +313,11 @@ async def get_products(
     current_user: dict = Depends(get_current_user_from_token),
     db: Session = Depends(get_db),
 ):
+
+    db_products = db.query(DBProduct).filter(DBProduct.is_validated == True).all()
+
     """Return all validated products for the marketplace."""
 
-    db_products = (
-        db.query(DBProduct).filter(DBProduct.is_validated == True).all()
-    )
 
     products = []
     for p in db_products:
@@ -447,8 +447,6 @@ async def my_products_page():
 
 
 @app.get("/api/my-products")
-
- {
 
 async def get_my_products(
     current_user: dict = Depends(get_current_user_from_token),
