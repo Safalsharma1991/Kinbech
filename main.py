@@ -331,15 +331,17 @@ async def get_products(
     current_user: dict = Depends(get_current_user_from_token),
     db: Session = Depends(get_db),
 ):
-
     """Return all validated products for the marketplace."""
 
-    db_products = db.query(DBProduct).filter(DBProduct.is_validated == True).all()
+    db_products = (
+        db.query(DBProduct)
+        .filter(DBProduct.is_validated == True)
+        .all()
+    )
 
     products = []
     for p in db_products:
         item = {
-
             "id": p.id,
             "name": p.name,
             "description": p.description,
