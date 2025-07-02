@@ -1,5 +1,5 @@
 # models.py
-from sqlalchemy import Column, Integer, String, Float, ForeignKey
+from sqlalchemy import Column, Integer, String, Float, ForeignKey, Boolean
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy import DateTime
@@ -19,6 +19,10 @@ class UserModel(Base):
     role = Column(String)  # Make sure it's a plain string field
     shop_name = Column(String, unique=True)
 
+    address = Column(String, nullable=True)
+    phone_number = Column(String, nullable=True)
+
+
 
 class Product(Base):
     __tablename__ = "products"
@@ -29,6 +33,7 @@ class Product(Base):
     seller = Column(String)
     shop_name = Column(String)
     image_url = Column(String)  # Add this line
+    is_validated = Column(Boolean, default=False)
     delivery_range_km = Column(Integer)
     expiry_datetime = Column(String)
 

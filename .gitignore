@@ -1,2 +1,8 @@
 __pycache__/
 *.pyc
+
+codex/implement-admin-role-and-endpoints
+test.db
+=======
+*.db
+main

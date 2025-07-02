@@ -66,6 +66,10 @@
     <input type="text" id="shop-name" placeholder="Shop Name" />
     <button onclick="updateShopName()">Save Shop Name</button>
     <p id="shop-msg" class="msg"></p>
+    <input type="text" id="address" placeholder="Address" />
+    <input type="text" id="phone-number" placeholder="Phone Number" />
+    <button onclick="saveSellerInfo()">Save Contact Info</button>
+    <p id="seller-info-msg" class="msg"></p>
     <input type="text" id="product-name" placeholder="Product Name" />
     <input type="text" id="product-desc" placeholder="Description (optional)" />
     <input type="number" id="product-price" placeholder="Price" step="0.01" />
@@ -109,6 +113,17 @@
             }
         }
 
+        async function loadSellerInfo() {
+            const res = await fetch("/seller/details", {
+                headers: { Authorization: "Bearer " + token }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                document.getElementById("address").value = data.address || "";
+                document.getElementById("phone-number").value = data.phone_number || "";
+            }
+        }
+
         async function updateShopName() {
             const name = document.getElementById("shop-name").value.trim();
             if (!name) return;
@@ -124,6 +139,25 @@
                 out.textContent = "Saved";
                 out.className = "msg success";
                 loadMyProducts();
+            } else {
+                out.textContent = "Error";
+                out.className = "msg error";
+            }
+        }
+
+        async function saveSellerInfo() {
+            const form = new FormData();
+            form.append("address", document.getElementById("address").value.trim());
+            form.append("phone_number", document.getElementById("phone-number").value.trim());
+            const res = await fetch("/seller/details", {
+                method: "POST",
+                headers: { Authorization: "Bearer " + token },
+                body: form
+            });
+            const out = document.getElementById("seller-info-msg");
+            if (res.ok) {
+                out.textContent = "Saved";
+                out.className = "msg success";
             } else {
                 out.textContent = "Error";
                 out.className = "msg error";
@@ -212,6 +246,7 @@
         }
 
         loadShopName();
+        loadSellerInfo();
         loadMyProducts();
     </script>
 

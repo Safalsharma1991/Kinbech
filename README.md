@@ -70,6 +70,45 @@ curl -X POST -H "Authorization: Bearer <token>" -F name=MyStore \
 
 When adding products, the seller page includes this shop name so buyers can see which store offers each item.
 
+### Updating Seller Contact Details
+
+Sellers can store an optional address and phone number using the `/seller/details` endpoints:
+
+```bash
+# View saved details
+curl -H "Authorization: Bearer <token>" http://127.0.0.1:8000/seller/details
+
+# Update address and phone
+curl -X POST \
+  -H "Authorization: Bearer <token>" \
+  -F address="123 Market St" \
+  -F phone_number="9876543210" \
+  http://127.0.0.1:8000/seller/details
+```
+
+These values appear on the seller dashboard where they can be edited anytime.
+
+---
+
+## Admin Users
+
+Create an admin account by sending a role of `"admin"` when registering:
+
+```bash
+curl -X POST -H "Content-Type: application/json" \
+     -d '{"username": "admin", "password": "secret", "role": ["admin"]}' \
+     http://127.0.0.1:8000/register
+```
+
+Admins can list all sellers using:
+
+```bash
+curl -H "Authorization: Bearer <token>" \
+     http://127.0.0.1:8000/admin/sellers
+```
+
+The response includes each seller's username, shop name, address and phone number.
+
 ---
 
 ## Folder Info

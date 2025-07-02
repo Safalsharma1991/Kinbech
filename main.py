@@ -1,3 +1,4 @@
+
 from fastapi import (
     FastAPI,
     HTTPException,
@@ -9,6 +10,10 @@ from fastapi import (
     APIRouter,
 )
 from fastapi.responses import FileResponse, JSONResponse
+
+from fastapi import FastAPI, HTTPException, Depends, status, Form, Request, Body
+from fastapi.responses import FileResponse
+
 from fastapi.staticfiles import StaticFiles
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from pydantic import BaseModel
@@ -21,15 +26,13 @@ import os
 from sqlalchemy.orm import Session
 from models import Base, Order, OrderItem, UserModel as DBUser, Product as DBProduct
 from database import engine, SessionLocal
-from sqlalchemy.exc import SQLAlchemyError
-from fastapi import UploadFile, File, Form
+from fastapi import UploadFile, File
 from fastapi.responses import HTMLResponse
 from models import Product, UserModel as User
 from schemas import ProductOut
 from database import get_db
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import RedirectResponse
-from pydantic import BaseModel
 import uuid
 
 app = FastAPI()
@@ -52,8 +55,6 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 60
 # Password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-# Simulated in-memory user DB
-users_db: Dict[str, dict] = {}
 
 
 products = []
@@ -65,7 +66,9 @@ class UserCreate(BaseModel):
     username: str
     full_name: Optional[str] = None
     password: str
-    role: list[str]
+    role: list[str] = ["buyer", "seller"]
+    address: Optional[str] = None
+    phone: Optional[str] = None
 
 
 class Token(BaseModel):
@@ -175,7 +178,11 @@ async def register(user: UserCreate, db: Session = Depends(get_db)):
         username=user.username,
         full_name=user.full_name,
         hashed_password=hashed_password,
-        role="buyer,seller",  # ✅ hardcoded
+
+        role=",".join(user.role),
+        address=user.address,
+        phone=user.phone,
+
     )
     db.add(db_user)
     db.commit()
@@ -245,6 +252,31 @@ def set_shop_name(
     return {"shop_name": user.shop_name}
 
 
+@app.get("/seller/details")
+def get_seller_details(current_user: dict = Depends(get_current_user_from_token), db: Session = Depends(get_db)):
+    user = db.query(DBUser).filter(DBUser.username == current_user["username"]).first()
+    return {
+        "address": user.address if user and user.address else "",
+        "phone_number": user.phone_number if user and user.phone_number else "",
+    }
+
+
+@app.post("/seller/details")
+def update_seller_details(
+    address: str = Form(None),
+    phone_number: str = Form(None),
+    current_user: dict = Depends(get_current_user_from_token),
+    db: Session = Depends(get_db),
+):
+    user = db.query(DBUser).filter(DBUser.username == current_user["username"]).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    user.address = address
+    user.phone_number = phone_number
+    db.commit()
+    return {"address": user.address, "phone_number": user.phone_number}
+
+
 @app.post("/products")
 async def create_product(
     name: str = Form(...),
@@ -275,6 +307,7 @@ async def create_product(
         seller=current_user["username"],
         shop_name=shop_name,
         image_url=",".join(image_urls),
+        is_validated=False,
         delivery_range_km=delivery_range_km,
         expiry_datetime=expiry_datetime,
     )
@@ -286,26 +319,35 @@ async def create_product(
 
 
 @app.get("/products")
+
 async def get_products(
     current_user: dict = Depends(get_current_user_from_token),
     db: Session = Depends(get_db),
 ):
+
     db_products = db.query(DBProduct).all()
+    products = []
+    for p in db_products:
+        item = {
+
+    db_products = db.query(DBProduct).filter(DBProduct.is_validated == True).all()
 
     return [
         {
+
             "id": p.id,
             "name": p.name,
             "description": p.description,
             "price": p.price,
             "seller": p.seller,
-            "shop_name": p.shop_name,
             "image_urls": p.image_url.split(","),
             "delivery_range_km": p.delivery_range_km,
             "expiry_datetime": p.expiry_datetime,
         }
-        for p in db_products
-    ]
+        if "admin" in current_user["role"]:
+            item["shop_name"] = p.shop_name
+        products.append(item)
+    return products
 
 
 @app.post("/buy/{product_id}")
@@ -321,6 +363,8 @@ async def buy_product(
     product = db.query(DBProduct).filter(DBProduct.id == product_id).first()
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
+    if not product.is_validated:
+        raise HTTPException(status_code=403, detail="Product not validated")
     order = Order(buyer=current_user["username"], address=address)
     db.add(order)
     db.flush()
@@ -415,26 +459,27 @@ async def my_products_page():
 
 
 @app.get("/api/my-products")
-async def get_my_products(
-    current_user: dict = Depends(get_current_user_from_token),
-    db: Session = Depends(get_db),
-):
-    products = (
-        db.query(DBProduct).filter(DBProduct.seller == current_user["username"]).all()
-    )
-    return [
-        {
+ {
+=======
+async def get_my_products(current_user: dict = Depends(get_current_user_from_token), db: Session = Depends(get_db)):
+    products = db.query(DBProduct).filter(
+        DBProduct.seller == current_user["username"]).all()
+    out = []
+    for p in products:
+        item = {
+
             "id": p.id,
             "name": p.name,
             "description": p.description,
             "price": p.price,
-            "shop_name": p.shop_name,
             "image_urls": p.image_url.split(","),
             "delivery_range_km": p.delivery_range_km,
             "expiry_datetime": p.expiry_datetime,
         }
-        for p in products
-    ]
+        if "admin" in current_user["role"]:
+            item["shop_name"] = p.shop_name
+        out.append(item)
+    return out
 
 
 @app.get("/seller/orders")
@@ -517,6 +562,30 @@ def get_notifications(
     ]
 
 
+@app.get("/admin/sellers")
+def list_sellers(
+    current_user: dict = Depends(get_current_user_from_token),
+    db: Session = Depends(get_db),
+):
+    if "admin" not in current_user["role"]:
+        raise HTTPException(status_code=403, detail="Admins only")
+
+    sellers = (
+        db.query(DBUser)
+        .filter(DBUser.role.like("%seller%"))
+        .all()
+    )
+    return [
+        {
+            "username": s.username,
+            "shop_name": s.shop_name,
+            "address": s.address,
+            "phone": s.phone,
+        }
+        for s in sellers
+    ]
+
+
 @app.get("/products/{product_id}", response_model=ProductOut)
 def get_product(
     product_id: int,
@@ -580,3 +649,52 @@ async def send_reset_link(payload: ResetRequest):
     print(f"Send this link via WhatsApp: {reset_link} to {payload.number}")
 
     return {"msg": "Reset link sent to your WhatsApp!"}
+
+
+# --- Admin Product Validation Endpoints ---
+
+def require_admin(current_user: dict):
+    if "admin" not in current_user["role"]:
+        raise HTTPException(status_code=403, detail="Admin access required")
+
+
+@app.get("/admin/products/pending")
+def list_pending_products(current_user: dict = Depends(get_current_user_from_token), db: Session = Depends(get_db)):
+    require_admin(current_user)
+    products = db.query(DBProduct).filter(DBProduct.is_validated == False).all()
+    return [
+        {
+            "id": p.id,
+            "name": p.name,
+            "description": p.description,
+            "price": p.price,
+            "seller": p.seller,
+            "shop_name": p.shop_name,
+            "image_urls": p.image_url.split(","),
+            "delivery_range_km": p.delivery_range_km,
+            "expiry_datetime": p.expiry_datetime,
+        }
+        for p in products
+    ]
+
+
+@app.post("/admin/products/{product_id}/validate")
+def validate_product(product_id: int, current_user: dict = Depends(get_current_user_from_token), db: Session = Depends(get_db)):
+    require_admin(current_user)
+    product = db.query(DBProduct).filter(DBProduct.id == product_id).first()
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+    product.is_validated = True
+    db.commit()
+    return {"msg": "Product validated"}
+
+
+@app.delete("/admin/products/{product_id}")
+def admin_delete_product(product_id: int, current_user: dict = Depends(get_current_user_from_token), db: Session = Depends(get_db)):
+    require_admin(current_user)
+    product = db.query(DBProduct).filter(DBProduct.id == product_id).first()
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+    db.delete(product)
+    db.commit()
+    return {"msg": "Product deleted"}
