@@ -614,7 +614,8 @@ def get_product(
     }
 
 
-templates = Jinja2Templates(directory="templates")  # Update path if needed
+# Load HTML templates from the same directory as other static files
+templates = Jinja2Templates(directory="static")
 
 
 @app.get("/forgot-password", response_class=HTMLResponse)
