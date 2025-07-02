@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+        h2 {
+            text-align: center;
+        }
+        .product {
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 8px;
+        }
+        img {
+            max-width: 100px;
+            vertical-align: middle;
+            margin-right: 10px;
+        }
+        button {
+            margin: 5px;
+            padding: 6px 12px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .delete {
+            background-color: #dc3545;
+        }
+        a {
+            display: inline-block;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h2>Pending Products</h2>
+    <div id="product-list">Loading...</div>
+    <a href="/static/admin_sellers.html">View Sellers</a>
+
+    <script>
+        const token = localStorage.getItem('access_token');
+        async function loadProducts() {
+            const res = await fetch('/admin/products/pending', {
+                headers: { Authorization: 'Bearer ' + token }
+            });
+            if (!res.ok) {
+                document.getElementById('product-list').innerHTML = 'Error loading products.';
+                return;
+            }
+            const data = await res.json();
+            const list = document.getElementById('product-list');
+            list.innerHTML = '';
+            if (data.length === 0) {
+                list.innerHTML = '<p>No pending products.</p>';
+                return;
+            }
+            data.forEach(p => {
+                const item = document.createElement('div');
+                item.className = 'product';
+                item.innerHTML = `
+                    ${p.image_urls.map(url => `<img src="${url}" alt="${p.name}">`).join('')}
+                    <strong>${p.name}</strong> by ${p.seller}<br>
+                    ₹${p.price} — ${p.description}
+                    <div>
+                        <button onclick="validateProduct(${p.id})">Validate</button>
+                        <button class="delete" onclick="deleteProduct(${p.id})">Delete</button>
+                    </div>
+                `;
+                list.appendChild(item);
+            });
+        }
+        async function validateProduct(id) {
+            const res = await fetch(`/admin/products/${id}/validate`, {
+                method: 'POST',
+                headers: { Authorization: 'Bearer ' + token }
+            });
+            if (res.ok) loadProducts();
+            else alert('Failed to validate');
+        }
+        async function deleteProduct(id) {
+            if (!confirm('Delete this product?')) return;
+            const res = await fetch(`/admin/products/${id}`, {
+                method: 'DELETE',
+                headers: { Authorization: 'Bearer ' + token }
+            });
+            if (res.ok) loadProducts();
+            else alert('Failed to delete');
+        }
+        loadProducts();
+    </script>
+</body>
+</html>

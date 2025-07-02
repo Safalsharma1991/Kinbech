@@ -26,9 +26,10 @@ from jose import JWTError, jwt
 from datetime import datetime, timedelta
 import json
 import os
+import asyncio
 from sqlalchemy.orm import Session
 from models import Base, Order, OrderItem, UserModel as DBUser, Product as DBProduct
-from database import engine, get_db
+from database import engine, get_db, SessionLocal
 from schemas import ProductOut
 from fastapi.templating import Jinja2Templates
 import uuid
@@ -36,6 +37,28 @@ import uuid
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
 Base.metadata.create_all(bind=engine)
+
+
+async def cleanup_expired_products():
+    """Periodically remove products past their expiry time."""
+    while True:
+        db = SessionLocal()
+        now = datetime.utcnow()
+        for product in db.query(DBProduct).all():
+            try:
+                expiry = datetime.fromisoformat(product.expiry_datetime)
+            except Exception:
+                continue
+            if expiry < now:
+                db.delete(product)
+        db.commit()
+        db.close()
+        await asyncio.sleep(3600)
+
+
+@app.on_event("startup")
+async def start_background_tasks():
+    asyncio.create_task(cleanup_expired_products())
 
 # Serve static frontend files
 
@@ -697,3 +720,17 @@ def admin_delete_product(product_id: int, current_user: dict = Depends(get_curre
     db.delete(product)
     db.commit()
     return {"msg": "Product deleted"}
+
+
+# ------- Admin Frontend Pages -------
+
+@app.get("/admin", include_in_schema=False)
+async def admin_dashboard_page():
+    """Serve the admin dashboard HTML."""
+    return FileResponse("static/admin_dashboard.html")
+
+
+@app.get("/admin/sellers/page", include_in_schema=False)
+async def admin_sellers_page():
+    """Serve the seller list HTML for admins."""
+    return FileResponse("static/admin_sellers.html")
