@@ -646,9 +646,10 @@ async def process_forgot_password(email: str = Form(...)):
     return RedirectResponse(url="/login", status_code=303)
 
 
-@app.get("/register", response_class=HTMLResponse)
-def register_form(request: Request):
-    return templates.TemplateResponse("register.html", {"request": request})
+# Registration is handled on the main page. The old form route is no longer used.
+# @app.get("/register", response_class=HTMLResponse)
+# def register_form(request: Request):
+#     return templates.TemplateResponse("register.html", {"request": request})
 
 
 @app.post("/send-reset-link")

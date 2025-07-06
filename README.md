@@ -53,6 +53,9 @@
 5. Open your browser and go to:
    [http://127.0.0.1:8000](http://127.0.0.1:8000)
 
+   Registration is handled directly on this page; there is no separate
+   `/register` form route.
+
 ---
 
 ## Managing Shop Names
