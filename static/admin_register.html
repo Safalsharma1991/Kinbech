@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Registration</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 400px;
+            margin: 40px auto;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+        }
+        input {
+            width: 100%;
+            padding: 8px;
+            margin: 6px 0;
+            box-sizing: border-box;
+        }
+        button {
+            padding: 10px 16px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #msg {
+            margin-top: 10px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h2>Admin Registration</h2>
+    <input type="text" id="username" placeholder="Username" />
+    <input type="text" id="full_name" placeholder="Full Name" />
+    <input type="password" id="password" placeholder="Password" />
+    <button onclick="registerAdmin()">Register</button>
+    <p id="msg"></p>
+    <p><a href="/static/index.html">Back to Login</a></p>
+
+    <script>
+        async function registerAdmin() {
+            const payload = {
+                username: document.getElementById('username').value.trim(),
+                full_name: document.getElementById('full_name').value.trim(),
+                password: document.getElementById('password').value,
+                role: ['admin']
+            };
+            document.getElementById('msg').textContent = '';
+            const res = await fetch('/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            if (res.ok) {
+                document.getElementById('msg').textContent = data.msg;
+                document.getElementById('msg').style.color = 'green';
+            } else {
+                document.getElementById('msg').textContent = data.detail || 'Error';
+                document.getElementById('msg').style.color = 'red';
+            }
+        }
+    </script>
+</body>
+</html>

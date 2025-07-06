@@ -727,3 +727,9 @@ async def admin_dashboard_page():
 async def admin_sellers_page():
     """Serve the seller list HTML for admins."""
     return FileResponse("static/admin_sellers.html")
+
+
+@app.get("/admin/register", include_in_schema=False)
+async def admin_register_page():
+    """Serve the admin registration form."""
+    return FileResponse("static/admin_register.html")
