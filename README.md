@@ -1,5 +1,7 @@
 # RangeCart
 
+![RangeCart Logo](static/uploads/Logo%20New.png)
+
 **RangeCart** is a simple web app where sellers can add their products and buyers can view and order them. The app has login, register, forgot password, and user roles like buyer and seller.
 
 ---
