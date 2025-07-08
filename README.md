@@ -8,6 +8,7 @@
 
 - User Login and Register
 - Add products with name, price, image, expiry time, and delivery range
+- Product images must be standard image files (png, jpg, gif, etc.)
 - Edit or delete products (seller only)
 - Place orders (buyer only)
 - Unique shop names for sellers

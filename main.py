@@ -303,6 +303,8 @@ async def create_product(
     image_urls = []
 
     for image in images:
+        if not image.content_type.startswith("image/"):
+            raise HTTPException(status_code=400, detail="Invalid image type")
         image_path = f"static/uploads/{image.filename}"
         with open(image_path, "wb") as buffer:
             buffer.write(await image.read())
