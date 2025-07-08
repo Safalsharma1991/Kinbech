@@ -33,6 +33,8 @@ from database import engine, get_db, SessionLocal
 from schemas import ProductOut
 from fastapi.templating import Jinja2Templates
 import uuid
+from uuid import uuid4
+from pathlib import Path
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -303,9 +305,9 @@ async def create_product(
     image_urls = []
 
     for image in images:
-        if not image.content_type.startswith("image/"):
-            raise HTTPException(status_code=400, detail="Invalid image type")
-        image_path = f"static/uploads/{image.filename}"
+        ext = Path(image.filename).suffix
+        filename = f"{uuid4().hex}{ext}"
+        image_path = Path("static/uploads") / filename
         with open(image_path, "wb") as buffer:
             buffer.write(await image.read())
         image_urls.append(f"/{image_path}")  # store with /static path
