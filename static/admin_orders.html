@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>All Orders</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+        .order {
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-bottom: 20px;
+        }
+        .items {
+            margin-left: 20px;
+        }
+    </style>
+</head>
+<body>
+    <a href="/static/admin_dashboard.html">&larr; Back to Dashboard</a>
+    <h2>All Orders</h2>
+    <div id="order-list">Loading...</div>
+
+    <script>
+        const token = localStorage.getItem('access_token');
+        async function loadOrders() {
+            const res = await fetch('/admin/orders', {
+                headers: { Authorization: 'Bearer ' + token }
+            });
+            const orders = await res.json();
+            const container = document.getElementById('order-list');
+            container.innerHTML = '';
+            if (orders.length === 0) {
+                container.innerHTML = '<p>No orders found.</p>';
+                return;
+            }
+            orders.forEach(o => {
+                const div = document.createElement('div');
+                div.className = 'order';
+                div.innerHTML = `
+                    <strong>Buyer:</strong> ${o.buyer} ${o.phone_number ? '(' + o.phone_number + ')' : ''}<br>
+                    Address: ${o.address}<br>
+                    ${o.items.map(i => `${i.name} x${i.quantity} - ₹${(i.price * i.quantity).toFixed(2)}`).join('<br>')}<br>
+                    <strong>Total: ₹${o.total.toFixed(2)}</strong><br>
+                    Status: ${o.status}<br>
+                    Time: ${new Date(o.timestamp).toLocaleString()}
+                `;
+                container.appendChild(div);
+            });
+        }
+        loadOrders();
+    </script>
+</body>
+</html>
