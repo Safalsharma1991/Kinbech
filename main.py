@@ -715,6 +715,36 @@ def admin_delete_product(product_id: int, current_user: dict = Depends(get_curre
     return {"msg": "Product deleted"}
 
 
+@app.get("/admin/orders")
+def get_all_orders(current_user: dict = Depends(get_current_user_from_token), db: Session = Depends(get_db)):
+    """Return all orders for admin view."""
+    require_admin(current_user)
+    orders = db.query(Order).all()
+    out = []
+    for order in orders:
+        buyer = db.query(DBUser).filter(DBUser.username == order.buyer).first()
+        out.append(
+            {
+                "id": order.id,
+                "buyer": order.buyer,
+                "phone_number": buyer.phone_number if buyer else None,
+                "address": order.address,
+                "items": [
+                    {
+                        "name": item.product.name,
+                        "price": item.product.price,
+                        "quantity": item.quantity,
+                    }
+                    for item in order.items
+                ],
+                "total": sum(item.product.price * item.quantity for item in order.items),
+                "timestamp": order.timestamp.isoformat(),
+                "status": order.status,
+            }
+        )
+    return out
+
+
 # ------- Admin Frontend Pages -------
 
 @app.get("/admin", include_in_schema=False)
