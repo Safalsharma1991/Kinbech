@@ -45,7 +45,7 @@
         }
 
 
-        #address-input {
+        input[type="text"] {
             width: 100%;
             padding: 8px;
             margin-top: 10px;
@@ -70,7 +70,10 @@
         <tbody></tbody>
     </table>
     <p id="total"></p>
-    <textarea id="address-input" placeholder="Enter delivery address" rows="3"></textarea>
+    <input type="text" id="address-line1" placeholder="Address Line 1" />
+    <input type="text" id="address-line2" placeholder="Address Line 2 (optional)" />
+    <input type="text" id="phone-number" placeholder="Phone Number" />
+    <input type="text" id="secondary-phone" placeholder="Secondary Phone (optional)" />
     <button onclick="placeOrder()">Place Order</button>
     <button onclick="goBack()">Back to Products</button>
 
@@ -121,11 +124,20 @@
         async function placeOrder() {
             if (cart.length === 0) return alert("Your cart is empty.");
 
-            const address = document.getElementById("address-input").value.trim();
-            if (!address) {
-                alert("Please enter delivery address.");
+            const line1 = document.getElementById("address-line1").value.trim();
+            const line2 = document.getElementById("address-line2").value.trim();
+            const phone = document.getElementById("phone-number").value.trim();
+            const phone2 = document.getElementById("secondary-phone").value.trim();
+
+            if (!line1 || !phone) {
+                alert("Please enter address line 1 and phone number.");
                 return;
             }
+
+            let address = line1;
+            if (line2) address += "\n" + line2;
+            address += `\nPhone: ${phone}`;
+            if (phone2) address += `, ${phone2}`;
 
             const token = localStorage.getItem("access_token");
             cart = JSON.parse(localStorage.getItem("cart") || "[]");
@@ -155,7 +167,10 @@
 
                 localStorage.removeItem("cart");
                 cart = [];
-                document.getElementById("address-input").value = "";
+                document.getElementById("address-line1").value = "";
+                document.getElementById("address-line2").value = "";
+                document.getElementById("phone-number").value = "";
+                document.getElementById("secondary-phone").value = "";
                 document.getElementById("message").style.color = "green";
                 document.getElementById("message").textContent = data.msg || "Order placed successfully!";
                 renderCart();
