@@ -1,21 +1,20 @@
-# RangeCart
+# Kinbech
 
-![RangeCart Logo](static/uploads/Logo%20New.png)
 
-**RangeCart** is a simple web app where sellers can add their products and buyers can view and order them. The app has login, register, forgot password, and user roles like buyer and seller.
+**Kinbech** is a lightweight marketplace built with FastAPI. Sellers can list their goods while buyers browse and order items. The application supports different user roles (buyer, seller and admin) and includes a small HTML frontend.
 
 ---
 
 ## Features
 
-- User Login and Register
-- Add products with name, price, image, expiry time, and delivery range
-- Product images must be standard image files (png, jpg, gif, etc.)
-- Edit or delete products (seller only)
-- Place orders (buyer only)
-- Unique shop names for sellers
-- Forgot password feature (sends reset link to WhatsApp)
-- Clean and simple design
+- JWT based login and registration
+- Sellers can list products with name, price, images, delivery range and expiry
+- Admin dashboard to validate or remove products and view all sellers
+- Buyers can place orders and receive notifications when orders are fulfilled
+- Optional shop name, address and phone number for each seller
+- Background task removes products after their expiry date
+- Basic forgot‑password endpoint (placeholder for WhatsApp integration)
+- Clean HTML/CSS frontend
 
 ---
 
@@ -40,7 +39,7 @@
 2. **Create virtual environment**
    ```bash
    python -m venv venv
-   venv\Scripts\activate   # For Windows
+   source venv/bin/activate   # On Windows use "venv\\Scripts\\activate"
    ```
 
 3. **Install required packages**
@@ -120,7 +119,7 @@ The response includes each seller's username, shop name, address and phone numbe
 ## Folder Info
 
 ```
-RangeCart/
+Kinbech/
 │
 ├── main.py           # Main FastAPI backend
 ├── models.py         # Data models (User, Product, etc.)
