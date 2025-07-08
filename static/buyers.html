@@ -111,7 +111,7 @@
 
   <strong>${p.name}</strong> - ₹${p.price.toFixed(2)}<br/>
   ${p.description ? p.description + "<br/>" : ""}
-  <button onclick="buyProduct(${p.id})">Buy</button>
+  <button onclick="buyProduct(${p.id}, '${p.name}', ${p.price})">Buy</button>
    <button onclick="addToCart(${p.id}, '${p.name}', ${p.price})">Add to Cart</button>
 `;
 
@@ -123,27 +123,9 @@
             }
         }
 
-        async function buyProduct(id) {
-            const address = prompt("Enter delivery address:");
-            if (!address) return;
-            try {
-                const res = await fetch(`/buy/${id}`, {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        Authorization: "Bearer " + token
-                    },
-                    body: JSON.stringify({ address })
-                });
-
-                const data = await res.json();
-                if (!res.ok) throw new Error(data.detail || "Failed to buy product");
-
-                document.getElementById("buyer-msg").textContent = data.msg;
-            } catch (err) {
-                document.getElementById("buyer-msg").textContent = err.message;
-                document.getElementById("buyer-msg").style.color = "red";
-            }
+        function buyProduct(id, name, price) {
+            addToCart(id, name, price);
+            window.location.href = "/static/cart.html";
         }
         function logout() {
             localStorage.removeItem("access_token");
