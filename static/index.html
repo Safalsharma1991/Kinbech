@@ -84,6 +84,12 @@
       margin-top: 10px;
     }
 
+    .note {
+      color: #555;
+      font-size: 12px;
+      margin-top: 5px;
+    }
+
     .hidden {
       display: none;
     }
@@ -112,6 +118,7 @@
     <div id="register-form" class="card hidden">
       <h2>Register</h2>
       <input type="text" id="reg-username" placeholder="Username" />
+      <p class="note">Username must be unique and end with <code>@kinbechmart.com</code></p>
       <input type="text" id="reg-fullname" placeholder="Full Name" />
       <input type="password" id="reg-password" placeholder="Password" />
       <button onclick="register()">Register</button>
