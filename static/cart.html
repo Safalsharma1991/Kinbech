@@ -100,6 +100,7 @@
                     tbody.innerHTML += `
                         <tr>
                             <td>${imgHtml}</td>
+                            <td><img class="cart-image" src="${item.imageUrl || ''}" alt="${item.name}"></td>
                             <td>${item.name}</td>
                             <td>${item.qty}</td>
                             <td>₹${(item.price * item.qty).toFixed(2)}</td>
