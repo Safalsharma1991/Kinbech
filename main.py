@@ -603,6 +603,42 @@ def list_sellers(
     ]
 
 
+@app.get("/admin/sellers/details")
+def list_seller_details(
+    current_user: dict = Depends(get_current_user_from_token),
+    db: Session = Depends(get_db),
+):
+    if "admin" not in current_user["role"]:
+        raise HTTPException(status_code=403, detail="Admins only")
+
+    sellers = db.query(DBUser).filter(DBUser.role.like("%seller%")).all()
+    output = []
+    for s in sellers:
+        products = db.query(DBProduct).filter(DBProduct.seller == s.username).all()
+        output.append(
+            {
+                "username": s.username,
+                "shop_name": s.shop_name,
+                "address": s.address,
+                "phone_number": s.phone_number,
+                "products": [
+                    {
+                        "id": p.id,
+                        "name": p.name,
+                        "description": p.description,
+                        "price": p.price,
+                        "delivery_range_km": p.delivery_range_km,
+                        "expiry_datetime": p.expiry_datetime,
+                        "image_urls": p.image_url.split(","),
+                        "is_validated": p.is_validated,
+                    }
+                    for p in products
+                ],
+            }
+        )
+    return output
+
+
 @app.get("/products/{product_id}", response_model=ProductOut)
 def get_product(
     product_id: int,
