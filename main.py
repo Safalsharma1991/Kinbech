@@ -570,6 +570,30 @@ def mark_order_fulfilled(
     return {"msg": "Order marked as fulfilled"}
 
 
+@app.post("/orders/{order_id}/complete")
+def complete_order(
+    order_id: int,
+    current_user: dict = Depends(get_current_user_from_token),
+    db: Session = Depends(get_db),
+):
+    """Allow admin or the buying user to mark an order as completed."""
+    order = db.query(Order).filter(Order.id == order_id).first()
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+
+    if "admin" not in current_user["role"] and not (
+        "buyer" in current_user["role"] and order.buyer == current_user["username"]
+    ):
+        raise HTTPException(status_code=403, detail="Unauthorized")
+
+    if order.status != "Fulfilled":
+        raise HTTPException(status_code=400, detail="Order not yet fulfilled")
+
+    order.status = "Completed"
+    db.commit()
+    return {"msg": "Order marked as completed"}
+
+
 @app.get("/buyer/notifications")
 def get_notifications(
     current_user: dict = Depends(get_current_user_from_token),
@@ -587,6 +611,41 @@ def get_notifications(
     return [
         {
             "id": o.id,
+            "status": o.status,
+            "timestamp": o.timestamp.isoformat(),
+        }
+        for o in orders
+    ]
+
+
+@app.get("/buyer/orders")
+def get_buyer_orders(
+    current_user: dict = Depends(get_current_user_from_token),
+    db: Session = Depends(get_db),
+):
+    """Return all orders for the logged in buyer."""
+    username = current_user["username"]
+
+    orders = (
+        db.query(Order)
+        .filter(Order.buyer == username)
+        .order_by(Order.timestamp.desc())
+        .all()
+    )
+
+    return [
+        {
+            "id": o.id,
+            "address": o.address,
+            "items": [
+                {
+                    "name": item.product.name,
+                    "price": item.product.price,
+                    "quantity": item.quantity,
+                }
+                for item in o.items
+            ],
+            "total": sum(item.product.price * item.quantity for item in o.items),
             "status": o.status,
             "timestamp": o.timestamp.isoformat(),
         }
