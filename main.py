@@ -321,10 +321,10 @@ async def create_product(
     for image in images:
         ext = Path(image.filename).suffix
         filename = f"{uuid4().hex}{ext}"
-        image_path = Path("static/uploads") / filename
+        image_path = Path("static", "uploads", filename)
         with open(image_path, "wb") as buffer:
             buffer.write(await image.read())
-        image_urls.append(f"/{image_path}")  # store with /static path
+        image_urls.append("/" + image_path.as_posix())  # use forward slashes
 
     new_product = DBProduct(  # ✅ correct model (SQLAlchemy)
         name=name,
