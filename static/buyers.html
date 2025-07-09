@@ -54,6 +54,45 @@
             color: green;
             text-align: center;
         }
+
+        /* Modal styling for product view */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            max-width: 90%;
+            text-align: center;
+        }
+
+        .modal-content img {
+            max-width: 200px;
+            margin-bottom: 10px;
+            transition: transform 0.3s ease;
+            cursor: zoom-in;
+        }
+
+        .modal-content img.zoomed {
+            transform: scale(2);
+            cursor: zoom-out;
+        }
+
+        .close {
+            float: right;
+            font-size: 20px;
+            cursor: pointer;
+        }
     </style>
 </head>
 
@@ -78,6 +117,14 @@
             style="background-color: red; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer;">
             Logout
         </button>
+    </div>
+
+    <!-- Modal for viewing product details -->
+    <div id="product-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeProductModal()">&times;</span>
+            <div id="modal-body"></div>
+        </div>
     </div>
 
 
@@ -112,8 +159,14 @@
   <strong>${p.name}</strong> - ₹${p.price.toFixed(2)}<br/>
   ${p.description ? p.description + "<br/>" : ""}
   <button onclick="buyProduct(${p.id}, '${p.name}', ${p.price})">Buy</button>
-   <button onclick="addToCart(${p.id}, '${p.name}', ${p.price})">Add to Cart</button>
+  <button onclick="addToCart(${p.id}, '${p.name}', ${p.price})">Add to Cart</button>
 `;
+
+                    li.addEventListener('click', (e) => {
+                        if (e.target.tagName !== 'BUTTON') {
+                            openProductModal(p);
+                        }
+                    });
 
                     list.appendChild(li);
                 });
@@ -134,6 +187,60 @@
 
         function goToMenu() {
             window.location.href = "/static/profile.html";  // go back to profile page
+        }
+
+        let modalImages = [];
+        let modalIndex = 0;
+
+        function openProductModal(product) {
+            modalImages = product.image_urls || [];
+            modalIndex = 0;
+
+            const body = document.getElementById("modal-body");
+            body.innerHTML = `
+                <img id="modal-image" src="${modalImages[0]}" alt="${product.name}">
+                <div style="margin: 10px 0;">
+                    <button onclick="changeModalImage(-1)">Prev</button>
+                    <button onclick="changeModalImage(1)">Next</button>
+                </div>
+                <h3>${product.name}</h3>
+                <p>${product.description || ""}</p>
+                <p>Price: ₹${product.price.toFixed(2)}</p>
+            `;
+            document.getElementById("product-modal").style.display = "flex";
+
+            const img = document.getElementById("modal-image");
+            img.addEventListener('dblclick', toggleZoom);
+            img.addEventListener('touchend', handleDoubleTap);
+        }
+
+        function changeModalImage(step) {
+            if (modalImages.length === 0) return;
+            modalIndex = (modalIndex + step + modalImages.length) % modalImages.length;
+            document.getElementById("modal-image").src = modalImages[modalIndex];
+        }
+
+        function toggleZoom() {
+            const img = document.getElementById("modal-image");
+            if (img) {
+                img.classList.toggle("zoomed");
+            }
+        }
+
+        let lastTap = 0;
+        function handleDoubleTap(e) {
+            const currentTime = Date.now();
+            if (currentTime - lastTap < 300) {
+                toggleZoom();
+                e.preventDefault();
+            }
+            lastTap = currentTime;
+        }
+
+        function closeProductModal() {
+            document.getElementById("product-modal").style.display = "none";
+            modalImages = [];
+            modalIndex = 0;
         }
 
         loadProducts();
