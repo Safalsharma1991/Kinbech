@@ -1,4 +1,3 @@
-
 from fastapi import (
     FastAPI,
     HTTPException,
@@ -62,6 +61,7 @@ async def cleanup_expired_products():
 async def start_background_tasks():
     asyncio.create_task(cleanup_expired_products())
 
+
 # Serve static frontend files
 
 
@@ -77,7 +77,6 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
 # Password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
 
 
 class UserCreate(BaseModel):
@@ -121,7 +120,6 @@ class CheckoutRequest(BaseModel):
 
 class ResetRequest(BaseModel):
     number: str
-
 
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
@@ -203,11 +201,9 @@ async def register(user: UserCreate, db: Session = Depends(get_db)):
         username=username,
         full_name=user.full_name,
         hashed_password=hashed_password,
-
         role=",".join(user.role),
         address=user.address,
         phone_number=user.phone,
-
     )
     db.add(db_user)
     db.commit()
@@ -278,7 +274,10 @@ def set_shop_name(
 
 
 @app.get("/seller/details")
-def get_seller_details(current_user: dict = Depends(get_current_user_from_token), db: Session = Depends(get_db)):
+def get_seller_details(
+    current_user: dict = Depends(get_current_user_from_token),
+    db: Session = Depends(get_db),
+):
     user = db.query(DBUser).filter(DBUser.username == current_user["username"]).first()
     return {
         "address": user.address if user and user.address else "",
@@ -352,11 +351,7 @@ async def get_products(
 ):
     """Return all validated products for the marketplace."""
 
-    db_products = (
-        db.query(DBProduct)
-        .filter(DBProduct.is_validated == True)
-        .all()
-    )
+    db_products = db.query(DBProduct).filter(DBProduct.is_validated == True).all()
 
     products = []
     for p in db_products:
@@ -377,7 +372,6 @@ async def get_products(
         products.append(item)
 
     return products
-
 
 
 @app.post("/buy/{product_id}")
@@ -494,12 +488,12 @@ async def get_my_products(
     db: Session = Depends(get_db),
 ):
 
-    products = db.query(DBProduct).filter(
-        DBProduct.seller == current_user["username"]).all()
+    products = (
+        db.query(DBProduct).filter(DBProduct.seller == current_user["username"]).all()
+    )
     out = []
     for p in products:
         item = {
-
             "id": p.id,
             "name": p.name,
             "description": p.description,
@@ -626,11 +620,7 @@ def list_sellers(
     if "admin" not in current_user["role"]:
         raise HTTPException(status_code=403, detail="Admins only")
 
-    sellers = (
-        db.query(DBUser)
-        .filter(DBUser.role.like("%seller%"))
-        .all()
-    )
+    sellers = db.query(DBUser).filter(DBUser.role.like("%seller%")).all()
     return [
         {
             "username": s.username,
@@ -747,13 +737,17 @@ async def send_reset_link(payload: ResetRequest):
 
 # --- Admin Product Validation Endpoints ---
 
+
 def require_admin(current_user: dict):
     if "admin" not in current_user["role"]:
         raise HTTPException(status_code=403, detail="Admin access required")
 
 
 @app.get("/admin/products/pending")
-def list_pending_products(current_user: dict = Depends(get_current_user_from_token), db: Session = Depends(get_db)):
+def list_pending_products(
+    current_user: dict = Depends(get_current_user_from_token),
+    db: Session = Depends(get_db),
+):
     require_admin(current_user)
     products = db.query(DBProduct).filter(DBProduct.is_validated == False).all()
     return [
@@ -773,7 +767,11 @@ def list_pending_products(current_user: dict = Depends(get_current_user_from_tok
 
 
 @app.post("/admin/products/{product_id}/validate")
-def validate_product(product_id: int, current_user: dict = Depends(get_current_user_from_token), db: Session = Depends(get_db)):
+def validate_product(
+    product_id: int,
+    current_user: dict = Depends(get_current_user_from_token),
+    db: Session = Depends(get_db),
+):
     require_admin(current_user)
     product = db.query(DBProduct).filter(DBProduct.id == product_id).first()
     if not product:
@@ -784,7 +782,11 @@ def validate_product(product_id: int, current_user: dict = Depends(get_current_u
 
 
 @app.delete("/admin/products/{product_id}")
-def admin_delete_product(product_id: int, current_user: dict = Depends(get_current_user_from_token), db: Session = Depends(get_db)):
+def admin_delete_product(
+    product_id: int,
+    current_user: dict = Depends(get_current_user_from_token),
+    db: Session = Depends(get_db),
+):
     require_admin(current_user)
     product = db.query(DBProduct).filter(DBProduct.id == product_id).first()
     if not product:
@@ -795,7 +797,10 @@ def admin_delete_product(product_id: int, current_user: dict = Depends(get_curre
 
 
 @app.get("/admin/orders")
-def get_all_orders(current_user: dict = Depends(get_current_user_from_token), db: Session = Depends(get_db)):
+def get_all_orders(
+    current_user: dict = Depends(get_current_user_from_token),
+    db: Session = Depends(get_db),
+):
     """Return all orders for admin view."""
     require_admin(current_user)
     orders = db.query(Order).all()
@@ -816,7 +821,9 @@ def get_all_orders(current_user: dict = Depends(get_current_user_from_token), db
                     }
                     for item in order.items
                 ],
-                "total": sum(item.product.price * item.quantity for item in order.items),
+                "total": sum(
+                    item.product.price * item.quantity for item in order.items
+                ),
                 "timestamp": order.timestamp.isoformat(),
                 "status": order.status,
             }
@@ -825,6 +832,7 @@ def get_all_orders(current_user: dict = Depends(get_current_user_from_token), db
 
 
 # ------- Admin Frontend Pages -------
+
 
 @app.get("/admin", include_in_schema=False)
 async def admin_dashboard_page():

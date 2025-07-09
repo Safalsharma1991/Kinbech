@@ -96,8 +96,10 @@
             } else {
                 cart.forEach((item, index) => {
                     total += item.price * item.qty;
+                    const imgHtml = item.imageUrl ? `<img class="cart-image" src="${item.imageUrl}" alt="${item.name}">` : "";
                     tbody.innerHTML += `
                         <tr>
+                            <td>${imgHtml}</td>
                             <td><img class="cart-image" src="${item.imageUrl || ''}" alt="${item.name}"></td>
                             <td>${item.name}</td>
                             <td>${item.qty}</td>
