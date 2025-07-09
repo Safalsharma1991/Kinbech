@@ -159,8 +159,8 @@
 
   <strong>${p.name}</strong> - ₹${p.price.toFixed(2)}<br/>
   ${p.description ? p.description + "<br/>" : ""}
-  <button onclick="buyProduct(${p.id}, '${p.name}', ${p.price})">Buy</button>
-  <button onclick="addToCart(${p.id}, '${p.name}', ${p.price})">Add to Cart</button>
+  <button onclick="buyProduct(${p.id}, '${p.name}', ${p.price}, '${p.image_urls[0] || ''}')">Buy</button>
+  <button onclick="addToCart(${p.id}, '${p.name}', ${p.price}, '${p.image_urls[0] || ''}')">Add to Cart</button>
 `;
 
                     li.addEventListener('click', (e) => {
@@ -177,8 +177,8 @@
             }
         }
 
-        function buyProduct(id, name, price) {
-            addToCart(id, name, price);
+        function buyProduct(id, name, price, imageUrl) {
+            addToCart(id, name, price, imageUrl);
             window.location.href = "/static/cart.html";
         }
         function logout() {
@@ -252,14 +252,15 @@
         }
 
         loadProducts();
-        function addToCart(id, name, price) {
+        function addToCart(id, name, price, imageUrl) {
             const cart = JSON.parse(localStorage.getItem("cart")) || [];
 
             const existing = cart.find(item => item.id === id);
             if (existing) {
                 existing.qty += 1;
+                if (!existing.imageUrl && imageUrl) existing.imageUrl = imageUrl;
             } else {
-                cart.push({ id, name, price, qty: 1 });
+                cart.push({ id, name, price, imageUrl, qty: 1 });
             }
 
             localStorage.setItem("cart", JSON.stringify(cart));
