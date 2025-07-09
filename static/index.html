@@ -84,6 +84,12 @@
       margin-top: 10px;
     }
 
+    .note {
+      color: #555;
+      font-size: 12px;
+      margin-top: 5px;
+    }
+
     .hidden {
       display: none;
     }
@@ -112,6 +118,7 @@
     <div id="register-form" class="card hidden">
       <h2>Register</h2>
       <input type="text" id="reg-username" placeholder="Username" />
+      <p class="note">Username must be unique and end with <code>@kinbechmart.com</code></p>
       <input type="text" id="reg-fullname" placeholder="Full Name" />
       <input type="password" id="reg-password" placeholder="Password" />
       <button onclick="register()">Register</button>
@@ -136,7 +143,7 @@
     let token = localStorage.getItem("access_token");
     let username = null;
     async function login() {
-      const user = document.getElementById("username").value.trim();
+      let user = document.getElementById("username").value.trim();
       const pass = document.getElementById("password").value.trim();
       document.getElementById("login-error").textContent = "";
 
@@ -145,6 +152,9 @@
         return;
       }
 
+      if(!user.endsWith("@kinbechmart.com")){
+        user = user + "@kinbechmart.com";
+      }
       const formData = new URLSearchParams();
       formData.append("username", user);
       formData.append("password", pass);
@@ -166,7 +176,7 @@
     }
 
     async function register() {
-      const username = document.getElementById("reg-username").value.trim();
+      let username = document.getElementById("reg-username").value.trim();
       const fullName = document.getElementById("reg-fullname").value.trim();
       const password = document.getElementById("reg-password").value.trim();
 
@@ -176,6 +186,10 @@
       if (!username || !password || !fullName) {
         document.getElementById("register-error").textContent = "All fields required.";
         return;
+      }
+
+      if(!username.endsWith("@kinbechmart.com")){
+        username = username + "@kinbechmart.com";
       }
 
       const payload = {

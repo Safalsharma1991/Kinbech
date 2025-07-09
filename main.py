@@ -177,15 +177,30 @@ def get_current_user_from_token(
         raise HTTPException(status_code=401, detail="Invalid token")
 
 
+def _generate_unique_username(base: str, db: Session) -> str:
+    """Generate a unique username with the kinbechmart.com domain."""
+    while True:
+        candidate = f"{base}{uuid4().hex[:5]}@kinbechmart.com"
+        if not db.query(DBUser).filter(DBUser.username == candidate).first():
+            return candidate
+
+
 @app.post("/register", status_code=201)
 async def register(user: UserCreate, db: Session = Depends(get_db)):
-    existing = db.query(DBUser).filter(DBUser.username == user.username).first()
+    base_name = user.username.split("@")[0]
+    username = f"{base_name}@kinbechmart.com"
+
+    existing = db.query(DBUser).filter(DBUser.username == username).first()
     if existing:
-        raise HTTPException(status_code=400, detail="Username already registered")
+        suggestion = _generate_unique_username(base_name, db)
+        raise HTTPException(
+            status_code=400,
+            detail=f"Username already registered. Suggested username: {suggestion}",
+        )
 
     hashed_password = get_password_hash(user.password)
     db_user = DBUser(
-        username=user.username,
+        username=username,
         full_name=user.full_name,
         hashed_password=hashed_password,
 
