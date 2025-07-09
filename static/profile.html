@@ -144,7 +144,15 @@
             if (role === 'buyer') {
                 window.location.href = "/static/buyers.html";
             } else if (role === 'seller') {
-                window.location.href = "/static/sellers.html";
+                fetch("/shop/name", { headers: { Authorization: `Bearer ${token}` } })
+                    .then(res => res.ok ? res.json() : { shop_name: "" })
+                    .then(data => {
+                        if (!data.shop_name) {
+                            window.location.href = "/static/shop_register.html";
+                        } else {
+                            window.location.href = "/static/sellers.html";
+                        }
+                    });
             } else if (role === 'admin') {
                 window.location.href = "/static/admin.html";
             }
