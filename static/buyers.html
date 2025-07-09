@@ -154,10 +154,12 @@
 
                 products.forEach(p => {
                     const li = document.createElement("li");
-                    // Escape both single quotes and backslashes so product
-                    // names with characters like \ or ' don't break the
-                    // onclick handler strings below
+                    // Escape product name and image URL for use inside onclick strings
                     const nameEsc = p.name
+                        .replace(/\\/g, "\\\\")
+                        .replace(/'/g, "\\'");
+                    const firstImage = p.image_urls[0] || "";
+                    const imageEsc = firstImage
                         .replace(/\\/g, "\\\\")
                         .replace(/'/g, "\\'");
                     li.innerHTML = `
@@ -165,8 +167,8 @@
 
   <strong>${p.name}</strong> - ₹${p.price.toFixed(2)}<br/>
   ${p.description ? p.description + "<br/>" : ""}
-  <button onclick="buyProduct(${p.id}, '${nameEsc}', ${p.price}, '${p.image_urls[0] || ''}')">Buy</button>
-  <button onclick="addToCart(${p.id}, '${nameEsc}', ${p.price}, '${p.image_urls[0] || ''}')">Add to Cart</button>
+  <button onclick="buyProduct(${p.id}, '${nameEsc}', ${p.price}, '${imageEsc}')">Buy</button>
+  <button onclick="addToCart(${p.id}, '${nameEsc}', ${p.price}, '${imageEsc}')">Add to Cart</button>
 `;
 
                     li.addEventListener('click', (e) => {
