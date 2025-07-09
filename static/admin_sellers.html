@@ -34,7 +34,7 @@
     <script>
         const token = localStorage.getItem('access_token');
         async function loadSellers() {
-            const res = await fetch('/admin/sellers', {
+            const res = await fetch('/admin/sellers/details', {
                 headers: { Authorization: 'Bearer ' + token }
             });
             if (!res.ok) {
@@ -51,11 +51,15 @@
             data.forEach(s => {
                 const item = document.createElement('div');
                 item.className = 'seller';
+                let products = (s.products || []).map(p =>
+                    `<li>${p.name} - ₹${p.price} (${p.description || ''})</li>`
+                ).join('');
                 item.innerHTML = `
                     <strong>${s.username}</strong><br>
                     Shop: ${s.shop_name || '-'}<br>
                     Address: ${s.address || '-'}<br>
-                    Phone: ${s.phone_number || '-'}
+                    Phone: ${s.phone_number || '-'}<br>
+                    <ul>${products || '<li>No products</li>'}</ul>
                 `;
                 list.appendChild(item);
             });
