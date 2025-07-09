@@ -544,24 +544,40 @@ def get_seller_orders(
     ]
 
 
+def _fulfill_order_logic(order_id: int, current_user: dict, db: Session):
+    """Shared logic for marking an order as fulfilled."""
+    order = db.query(Order).filter(Order.id == order_id).first()
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+
+    # Check ownership unless user is an admin
+    if "admin" not in current_user["role"]:
+        for item in order.items:
+            if item.product.seller != current_user["username"]:
+                raise HTTPException(status_code=403, detail="Unauthorized")
+
+    order.status = "Fulfilled"
+    db.commit()
+    return {"msg": "Order marked as fulfilled"}
+
+
 @app.post("/seller/orders/{order_id}/fulfill")
 def mark_order_fulfilled(
     order_id: int,
     current_user: dict = Depends(get_current_user_from_token),
     db: Session = Depends(get_db),
 ):
-    order = db.query(Order).filter(Order.id == order_id).first()
-    if not order:
-        raise HTTPException(status_code=404, detail="Order not found")
+    return _fulfill_order_logic(order_id, current_user, db)
 
-    # Optional: Check if the seller is the owner of the order items
-    for item in order.items:
-        if item.product.seller != current_user["username"]:
-            raise HTTPException(status_code=403, detail="Unauthorized")
 
-    order.status = "Fulfilled"
-    db.commit()
-    return {"msg": "Order marked as fulfilled"}
+@app.post("/orders/{order_id}/fulfill")
+def mark_order_fulfilled_general(
+    order_id: int,
+    current_user: dict = Depends(get_current_user_from_token),
+    db: Session = Depends(get_db),
+):
+    """Endpoint for admins or sellers to mark an order as fulfilled."""
+    return _fulfill_order_logic(order_id, current_user, db)
 
 
 @app.post("/orders/{order_id}/complete")

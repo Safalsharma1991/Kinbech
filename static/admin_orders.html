@@ -41,6 +41,9 @@
             orders.forEach(o => {
                 const div = document.createElement('div');
                 div.className = 'order';
+                const fulfillBtn = o.status === 'Pending'
+                    ? `<button onclick="fulfillOrder(${o.id})">Mark Fulfilled</button>`
+                    : '';
                 const completeBtn = o.status === 'Fulfilled'
                     ? `<button onclick="completeOrder(${o.id})">Mark Completed</button>`
                     : '';
@@ -51,7 +54,7 @@
                     <strong>Total: ₹${o.total.toFixed(2)}</strong><br>
                     Status: ${o.status}<br>
                     Time: ${new Date(o.timestamp).toLocaleString()}<br>
-                    ${completeBtn}
+                    ${fulfillBtn} ${completeBtn}
                 `;
                 container.appendChild(div);
             });
@@ -68,6 +71,19 @@
                 loadOrders();
             } else {
                 alert('Failed to complete order');
+            }
+        }
+
+        async function fulfillOrder(orderId) {
+            if (!confirm('Mark this order fulfilled?')) return;
+            const res = await fetch(`/orders/${orderId}/fulfill`, {
+                method: 'POST',
+                headers: { Authorization: 'Bearer ' + token }
+            });
+            if (res.ok) {
+                loadOrders();
+            } else {
+                alert('Failed to fulfill order');
             }
         }
     </script>
