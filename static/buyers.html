@@ -154,7 +154,12 @@
 
                 products.forEach(p => {
                     const li = document.createElement("li");
-                    const nameEsc = p.name.replace(/'/g, "\\'");
+                    // Escape both single quotes and backslashes so product
+                    // names with characters like \ or ' don't break the
+                    // onclick handler strings below
+                    const nameEsc = p.name
+                        .replace(/\\/g, "\\\\")
+                        .replace(/'/g, "\\'");
                     li.innerHTML = `
   ${p.image_urls.map(url => `<img src="${url}" alt="${p.name}" width="150" height="150">`).join("")}<br/>
 
