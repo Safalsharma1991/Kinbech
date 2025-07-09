@@ -612,6 +612,41 @@ def get_notifications(
     ]
 
 
+@app.get("/buyer/orders")
+def get_buyer_orders(
+    current_user: dict = Depends(get_current_user_from_token),
+    db: Session = Depends(get_db),
+):
+    """Return all orders for the logged in buyer."""
+    username = current_user["username"]
+
+    orders = (
+        db.query(Order)
+        .filter(Order.buyer == username)
+        .order_by(Order.timestamp.desc())
+        .all()
+    )
+
+    return [
+        {
+            "id": o.id,
+            "address": o.address,
+            "items": [
+                {
+                    "name": item.product.name,
+                    "price": item.product.price,
+                    "quantity": item.quantity,
+                }
+                for item in o.items
+            ],
+            "total": sum(item.product.price * item.quantity for item in o.items),
+            "status": o.status,
+            "timestamp": o.timestamp.isoformat(),
+        }
+        for o in orders
+    ]
+
+
 @app.get("/admin/sellers")
 def list_sellers(
     current_user: dict = Depends(get_current_user_from_token),
