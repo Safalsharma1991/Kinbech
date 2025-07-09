@@ -79,6 +79,14 @@
         .modal-content img {
             max-width: 200px;
             margin-bottom: 10px;
+            transition: transform 0.3s ease;
+            cursor: zoom-in;
+        }
+
+        .modal-content img.zoomed {
+            transform: scale(2);
+            cursor: zoom-out;
+
         }
 
         .close {
@@ -203,7 +211,16 @@
                 <p>Price: ₹${product.price.toFixed(2)}</p>
             `;
             document.getElementById("product-modal").style.display = "flex";
+
+
+            const img = document.getElementById("modal-image");
+            img.addEventListener('dblclick', toggleZoom);
+            img.addEventListener('touchend', handleDoubleTap);
         }
+
+
+        
+
 
 
         function changeModalImage(step) {
@@ -211,6 +228,25 @@
             modalIndex = (modalIndex + step + modalImages.length) % modalImages.length;
             document.getElementById("modal-image").src = modalImages[modalIndex];
         }
+
+
+        function toggleZoom() {
+            const img = document.getElementById("modal-image");
+            if (img) {
+                img.classList.toggle("zoomed");
+            }
+        }
+
+        let lastTap = 0;
+        function handleDoubleTap(e) {
+            const currentTime = Date.now();
+            if (currentTime - lastTap < 300) {
+                toggleZoom();
+                e.preventDefault();
+            }
+            lastTap = currentTime;
+        }
+
 
         function closeProductModal() {
             document.getElementById("product-modal").style.display = "none";
