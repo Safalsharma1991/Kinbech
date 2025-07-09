@@ -73,6 +73,7 @@
             padding: 20px;
             border-radius: 8px;
             max-width: 90%;
+            text-align: center;
         }
 
         .modal-content img {
@@ -181,10 +182,22 @@
             window.location.href = "/static/profile.html";  // go back to profile page
         }
 
+
+        let modalImages = [];
+        let modalIndex = 0;
+
         function openProductModal(product) {
+            modalImages = product.image_urls || [];
+            modalIndex = 0;
+
             const body = document.getElementById("modal-body");
             body.innerHTML = `
-                ${product.image_urls.map(url => `<img src="${url}" alt="${product.name}">`).join("")}
+                <img id="modal-image" src="${modalImages[0]}" alt="${product.name}">
+                <div style="margin: 10px 0;">
+                    <button onclick="changeModalImage(-1)">Prev</button>
+                    <button onclick="changeModalImage(1)">Next</button>
+                </div>
+
                 <h3>${product.name}</h3>
                 <p>${product.description || ""}</p>
                 <p>Price: ₹${product.price.toFixed(2)}</p>
@@ -192,8 +205,18 @@
             document.getElementById("product-modal").style.display = "flex";
         }
 
+
+        function changeModalImage(step) {
+            if (modalImages.length === 0) return;
+            modalIndex = (modalIndex + step + modalImages.length) % modalImages.length;
+            document.getElementById("modal-image").src = modalImages[modalIndex];
+        }
+
         function closeProductModal() {
             document.getElementById("product-modal").style.display = "none";
+            modalImages = [];
+            modalIndex = 0;
+
         }
 
         loadProducts();
