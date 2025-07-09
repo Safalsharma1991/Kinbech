@@ -114,6 +114,16 @@ curl -H "Authorization: Bearer <token>" \
 
 The response includes each seller's username, shop name, address and phone number.
 
+Admins can retrieve each seller along with their listed products:
+
+```bash
+curl -H "Authorization: Bearer <token>" \
+     http://127.0.0.1:8000/admin/sellers/details
+```
+
+Each seller object in the returned JSON also contains a `products` array listing all
+their items.
+
 ---
 
 ## Folder Info
