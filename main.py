@@ -570,6 +570,30 @@ def mark_order_fulfilled(
     return {"msg": "Order marked as fulfilled"}
 
 
+@app.post("/orders/{order_id}/complete")
+def complete_order(
+    order_id: int,
+    current_user: dict = Depends(get_current_user_from_token),
+    db: Session = Depends(get_db),
+):
+    """Allow admin or the buying user to mark an order as completed."""
+    order = db.query(Order).filter(Order.id == order_id).first()
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+
+    if "admin" not in current_user["role"] and not (
+        "buyer" in current_user["role"] and order.buyer == current_user["username"]
+    ):
+        raise HTTPException(status_code=403, detail="Unauthorized")
+
+    if order.status != "Fulfilled":
+        raise HTTPException(status_code=400, detail="Order not yet fulfilled")
+
+    order.status = "Completed"
+    db.commit()
+    return {"msg": "Order marked as completed"}
+
+
 @app.get("/buyer/notifications")
 def get_notifications(
     current_user: dict = Depends(get_current_user_from_token),
