@@ -63,13 +63,7 @@
 
 
     <h2>Seller View - Add Product</h2>
-    <input type="text" id="shop-name" placeholder="Shop Name" />
-    <button onclick="updateShopName()">Save Shop Name</button>
-    <p id="shop-msg" class="msg"></p>
-    <input type="text" id="address" placeholder="Address" />
-    <input type="text" id="phone-number" placeholder="Phone Number" />
-    <button onclick="saveSellerInfo()">Save Contact Info</button>
-    <p id="seller-info-msg" class="msg"></p>
+    <p id="seller-msg" style="color:green;"></p>
     <input type="text" id="product-name" placeholder="Product Name" />
     <input type="text" id="product-desc" placeholder="Description (optional)" />
     <input type="number" id="product-price" placeholder="Price" step="0.01" />
@@ -78,7 +72,6 @@
     <input type="file" id="product-image" accept="image/*" multiple>
 
     <button onclick="addProduct()">Add Product</button>
-    <p id="seller-msg" style="color:green;"></p>
     <ul id="my-products"></ul>
 
 
@@ -103,64 +96,18 @@
             window.location.href = "/static/index.html";
         }
 
+        let shopName = "";
+
         async function loadShopName() {
             const res = await fetch("/shop/name", {
                 headers: { Authorization: "Bearer " + token }
             });
             if (res.ok) {
                 const data = await res.json();
-                document.getElementById("shop-name").value = data.shop_name || "";
-            }
-        }
-
-        async function loadSellerInfo() {
-            const res = await fetch("/seller/details", {
-                headers: { Authorization: "Bearer " + token }
-            });
-            if (res.ok) {
-                const data = await res.json();
-                document.getElementById("address").value = data.address || "";
-                document.getElementById("phone-number").value = data.phone_number || "";
-            }
-        }
-
-        async function updateShopName() {
-            const name = document.getElementById("shop-name").value.trim();
-            if (!name) return;
-            const form = new FormData();
-            form.append("name", name);
-            const res = await fetch("/shop/name", {
-                method: "POST",
-                headers: { Authorization: "Bearer " + token },
-                body: form
-            });
-            const out = document.getElementById("shop-msg");
-            if (res.ok) {
-                out.textContent = "Saved";
-                out.className = "msg success";
-                loadMyProducts();
-            } else {
-                out.textContent = "Error";
-                out.className = "msg error";
-            }
-        }
-
-        async function saveSellerInfo() {
-            const form = new FormData();
-            form.append("address", document.getElementById("address").value.trim());
-            form.append("phone_number", document.getElementById("phone-number").value.trim());
-            const res = await fetch("/seller/details", {
-                method: "POST",
-                headers: { Authorization: "Bearer " + token },
-                body: form
-            });
-            const out = document.getElementById("seller-info-msg");
-            if (res.ok) {
-                out.textContent = "Saved";
-                out.className = "msg success";
-            } else {
-                out.textContent = "Error";
-                out.className = "msg error";
+                shopName = data.shop_name || "";
+                if (!shopName) {
+                    window.location.href = "/static/shop_register.html";
+                }
             }
         }
 
@@ -195,7 +142,7 @@
 
             const formData = new FormData();
             formData.append("name", name);
-            formData.append("shop_name", document.getElementById("shop-name").value.trim());
+            formData.append("shop_name", shopName);
             formData.append("description", desc);
             formData.append("price", price);
             formData.append("delivery_range_km", range);
@@ -246,10 +193,8 @@
         }
 
         loadShopName();
-        loadSellerInfo();
 
     </script>
 
 </body>
-
 </html>

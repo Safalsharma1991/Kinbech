@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register Shop</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 400px;
+            margin: 40px auto;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+        }
+        input {
+            width: 100%;
+            padding: 8px;
+            margin: 6px 0;
+            box-sizing: border-box;
+        }
+        button {
+            padding: 10px 16px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #218838;
+        }
+        #msg {
+            margin-top: 10px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h2>Register Your Shop</h2>
+    <input type="text" id="shop-name" placeholder="Shop Name" />
+    <input type="text" id="address" placeholder="Address" />
+    <input type="text" id="phone" placeholder="Phone Number" />
+    <button onclick="saveShop()">Save</button>
+    <p id="msg"></p>
+
+    <script>
+        const token = localStorage.getItem('access_token');
+        if (!token) {
+            window.location.href = '/static/index.html';
+        }
+
+        async function saveShop() {
+            const name = document.getElementById('shop-name').value.trim();
+            const address = document.getElementById('address').value.trim();
+            const phone = document.getElementById('phone').value.trim();
+            const msg = document.getElementById('msg');
+            msg.textContent = '';
+
+            if (!name) {
+                msg.textContent = 'Shop name required';
+                msg.style.color = 'red';
+                return;
+            }
+
+            const form = new FormData();
+            form.append('name', name);
+            let res = await fetch('/shop/name', {
+                method: 'POST',
+                headers: { Authorization: 'Bearer ' + token },
+                body: form
+            });
+            if (!res.ok) {
+                const err = await res.json();
+                msg.textContent = err.detail || 'Error';
+                msg.style.color = 'red';
+                return;
+            }
+
+            const form2 = new FormData();
+            form2.append('address', address);
+            form2.append('phone_number', phone);
+            await fetch('/seller/details', {
+                method: 'POST',
+                headers: { Authorization: 'Bearer ' + token },
+                body: form2
+            });
+
+            window.location.href = '/static/sellers.html';
+        }
+    </script>
+</body>
+</html>
