@@ -11,6 +11,4 @@ class ProductOut(BaseModel):
     expiry_datetime: str  # or datetime if you’re using datetime
     image_urls: List[str]
 
-    model_config = {
-        "from_attributes": True
-    }
+    model_config = {"from_attributes": True}

@@ -29,6 +29,11 @@
             text-align: center;
         }
 
+        .cart-image {
+            max-width: 50px;
+            height: auto;
+        }
+
         button {
             padding: 5px 10px;
         }
@@ -61,6 +66,7 @@
     <table id="cart-table">
         <thead>
             <tr>
+                <th>Image</th>
                 <th>Item</th>
                 <th>Qty</th>
                 <th>Price</th>
@@ -86,12 +92,14 @@
             let total = 0;
 
             if (cart.length === 0) {
-                tbody.innerHTML = "<tr><td colspan='4'>Your cart is empty.</td></tr>";
+                tbody.innerHTML = "<tr><td colspan='5'>Your cart is empty.</td></tr>";
             } else {
                 cart.forEach((item, index) => {
                     total += item.price * item.qty;
+                    const imgHtml = item.imageUrl ? `<img class="cart-image" src="${item.imageUrl}" alt="${item.name}">` : "";
                     tbody.innerHTML += `
                         <tr>
+                            <td>${imgHtml}</td>
                             <td>${item.name}</td>
                             <td>${item.qty}</td>
                             <td>₹${(item.price * item.qty).toFixed(2)}</td>
