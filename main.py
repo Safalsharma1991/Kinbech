@@ -800,6 +800,19 @@ async def send_reset_link(payload: ResetRequest):
     return {"msg": "Reset link sent to your WhatsApp!"}
 
 
+@app.post("/send-username")
+async def send_username(payload: ResetRequest, db: Session = Depends(get_db)):
+    """Send the user's username to their WhatsApp number."""
+    user = db.query(DBUser).filter(DBUser.phone_number == payload.number).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Number not found")
+
+    # TODO: Replace this with actual WhatsApp API integration
+    print(f"Send username {user.username} via WhatsApp to {payload.number}")
+
+    return {"msg": "Username sent to your WhatsApp!"}
+
+
 # --- Admin Product Validation Endpoints ---
 
 

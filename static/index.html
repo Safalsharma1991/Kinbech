@@ -109,6 +109,8 @@
       <p class="switch">New user? <a href="#" onclick="toggleRegister()">Register here</a>
         <span class="divider">|</span>
         <a href="#" onclick="toggleForgotPassword()">Forgot Password?</a>
+        <span class="divider">|</span>
+        <a href="#" onclick="toggleForgotUsername()">Forgot Username?</a>
         
       </p>
 
@@ -136,6 +138,16 @@
     <p id="forgot-msg" class="success"></p>
     <p id="forgot-error" class="error"></p>
     <p class="switch">Remembered your password? <a href="#" onclick="toggleLogin()">Login here</a></p>
+  </div>
+
+  <!-- Forgot Username form -->
+  <div id="forgot-username-form" class="card hidden">
+    <h2>Recover Username</h2>
+    <input type="text" id="username-number" placeholder="Enter your WhatsApp number" />
+    <button onclick="sendUsername()">Send Username</button>
+    <p id="username-msg" class="success"></p>
+    <p id="username-error" class="error"></p>
+    <p class="switch">Remembered it? <a href="#" onclick="toggleLogin()">Login here</a></p>
   </div>
 
 
@@ -220,6 +232,7 @@
 
   function toggleRegister() {
       document.getElementById("forgot-form").classList.add("hidden");
+      document.getElementById("forgot-username-form").classList.add("hidden");
       document.getElementById("login").classList.add("hidden");
       document.getElementById("register-form").classList.remove("hidden");
       document.getElementById("form-container").classList.remove("hidden");
@@ -227,6 +240,7 @@
 
     function toggleLogin() {
       document.getElementById("forgot-form").classList.add("hidden");
+      document.getElementById("forgot-username-form").classList.add("hidden");
       document.getElementById("register-form").classList.add("hidden");
       document.getElementById("login").classList.remove("hidden");
       document.getElementById("form-container").classList.remove("hidden");
@@ -246,8 +260,17 @@
     function toggleForgotPassword() {
       document.getElementById("login").classList.add("hidden");
       document.getElementById("register-form").classList.add("hidden");
+      document.getElementById("forgot-username-form").classList.add("hidden");
       document.getElementById("form-container").classList.add("hidden");
       document.getElementById("forgot-form").classList.remove("hidden");
+    }
+
+    function toggleForgotUsername() {
+      document.getElementById("login").classList.add("hidden");
+      document.getElementById("register-form").classList.add("hidden");
+      document.getElementById("forgot-form").classList.add("hidden");
+      document.getElementById("form-container").classList.add("hidden");
+      document.getElementById("forgot-username-form").classList.remove("hidden");
     }
 
     async function sendResetLink() {
@@ -273,6 +296,32 @@
         document.getElementById("forgot-msg").textContent = data.msg;
       } catch (err) {
         document.getElementById("forgot-error").textContent = err.message;
+      }
+    }
+
+    async function sendUsername() {
+      const number = document.getElementById("username-number").value.trim();
+      document.getElementById("username-msg").textContent = "";
+      document.getElementById("username-error").textContent = "";
+
+      if (!number) {
+        document.getElementById("username-error").textContent = "Enter a valid WhatsApp number.";
+        return;
+      }
+
+      try {
+        const res = await fetch("/send-username", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ number })
+        });
+
+        if (!res.ok) throw new Error("Could not send username");
+
+        const data = await res.json();
+        document.getElementById("username-msg").textContent = data.msg;
+      } catch (err) {
+        document.getElementById("username-error").textContent = err.message;
       }
     }
 
