@@ -14,7 +14,7 @@
 - Optional shop name, address and phone number for each seller
 - Order items now store the seller's shop name
 - Background task removes products after their expiry date
-- Basic forgot‑password endpoint (placeholder for WhatsApp integration)
+- WhatsApp-based username and password recovery
 - Clean HTML/CSS frontend
 
 ---
