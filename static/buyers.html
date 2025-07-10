@@ -167,8 +167,10 @@
 
   <strong>${p.name}</strong> - ₹${p.price.toFixed(2)}<br/>
   ${p.description ? p.description + "<br/>" : ""}
-  <button onclick="buyProduct(${p.id}, '${nameEsc}', ${p.price}, '${imageEsc}')">Buy</button>
-  <button onclick="addToCart(${p.id}, '${nameEsc}', ${p.price}, '${imageEsc}')">Add to Cart</button>
+
+  <button onclick="buyProduct(${p.id}, '${p.name}', ${p.price}, '${p.image_urls[0] || ''}')">Buy</button>
+  <button onclick="addToCart(${p.id}, '${p.name}', ${p.price}, '${p.image_urls[0] || ''}')">Add to Cart</button>
+
 `;
 
                     li.addEventListener('click', (e) => {
