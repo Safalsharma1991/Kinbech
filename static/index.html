@@ -10,6 +10,7 @@
       background: linear-gradient(135deg, #e0f7fa, #fce4ec);
       font-family: 'Segoe UI', sans-serif;
       display: flex;
+      flex-direction: column;
       justify-content: center;
       align-items: center;
       height: 100vh;
@@ -29,6 +30,10 @@
       box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
       text-align: center;
       transition: all 0.3s ease-in-out;
+    }
+
+    .info-card {
+      margin-top: 20px;
     }
 
     h2 {
@@ -136,6 +141,12 @@
     <p id="forgot-msg" class="success"></p>
     <p id="forgot-error" class="error"></p>
     <p class="switch">Remembered your password? <a href="#" onclick="toggleLogin()">Login here</a></p>
+  </div>
+
+  <div class="info-card card">
+    <h3>About RangeCart</h3>
+    <p>RangeCart connects local buyers and sellers. Log in or register above, then choose to continue as a buyer or seller from your profile page.</p>
+    <p>Sellers can list products with images and prices. Buyers browse items, add them to the cart, and place orders. Use “Forgot Password” if you need to reset your credentials.</p>
   </div>
 
 
