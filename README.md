@@ -124,6 +124,15 @@ curl -H "Authorization: Bearer <token>" \
 Each seller object in the returned JSON also contains a `products` array listing all
 their items.
 
+Admins can mark any order as fulfilled, bypassing the seller ownership check:
+
+```bash
+curl -X POST -H "Authorization: Bearer <token>" \
+     http://127.0.0.1:8000/orders/<order_id>/fulfill
+```
+
+This endpoint is also used by the admin dashboard to update pending orders.
+
 ---
 
 ## Folder Info

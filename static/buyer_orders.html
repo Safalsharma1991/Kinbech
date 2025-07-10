@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>All Orders</title>
+    <title>My Orders</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -21,20 +21,16 @@
     </style>
 </head>
 <body>
-    <a href="/static/admin_dashboard.html">&larr; Back to Dashboard</a>
-    <h2>All Orders</h2>
+    <a href="/static/buyers.html">&larr; Back to Products</a>
+    <h2>My Orders</h2>
     <div id="order-list">Loading...</div>
 
     <script>
         const token = localStorage.getItem('access_token');
         async function loadOrders() {
-            const res = await fetch('/admin/orders', {
+            const res = await fetch('/buyer/orders', {
                 headers: { Authorization: 'Bearer ' + token }
             });
-            if (!res.ok) {
-                document.getElementById('order-list').innerHTML = 'Error loading orders.';
-                return;
-            }
             const orders = await res.json();
             const container = document.getElementById('order-list');
             container.innerHTML = '';
@@ -45,20 +41,16 @@
             orders.forEach(o => {
                 const div = document.createElement('div');
                 div.className = 'order';
-                const fulfillBtn = o.status === 'Pending'
-                    ? `<button onclick="fulfillOrder(${o.id})">Mark Fulfilled</button>`
-                    : '';
                 const completeBtn = o.status === 'Fulfilled'
                     ? `<button onclick="completeOrder(${o.id})">Mark Completed</button>`
                     : '';
                 div.innerHTML = `
-                    <strong>Buyer:</strong> ${o.buyer} ${o.phone_number ? '(' + o.phone_number + ')' : ''}<br>
                     Address: ${o.address}<br>
                     ${o.items.map(i => `${i.name} x${i.quantity} - ₹${(i.price * i.quantity).toFixed(2)}`).join('<br>')}<br>
                     <strong>Total: ₹${o.total.toFixed(2)}</strong><br>
                     Status: ${o.status}<br>
                     Time: ${new Date(o.timestamp).toLocaleString()}<br>
-                    ${fulfillBtn} ${completeBtn}
+                    ${completeBtn}
                 `;
                 container.appendChild(div);
             });
@@ -75,19 +67,6 @@
                 loadOrders();
             } else {
                 alert('Failed to complete order');
-            }
-        }
-
-        async function fulfillOrder(orderId) {
-            if (!confirm('Mark this order fulfilled?')) return;
-            const res = await fetch(`/orders/${orderId}/fulfill`, {
-                method: 'POST',
-                headers: { Authorization: 'Bearer ' + token }
-            });
-            if (res.ok) {
-                loadOrders();
-            } else {
-                alert('Failed to fulfill order');
             }
         }
     </script>

@@ -112,7 +112,7 @@
             Menu
         </button>
         <button onclick="window.location.href='/static/cart.html'">Go to Cart</button>
-
+        <button onclick="window.location.href='/static/buyer_orders.html'">My Orders</button>
 
         <button onclick="logout()"
             style="background-color: red; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer;">
@@ -154,13 +154,23 @@
 
                 products.forEach(p => {
                     const li = document.createElement("li");
+                    // Escape product name and image URL for use inside onclick strings
+                    const nameEsc = p.name
+                        .replace(/\\/g, "\\\\")
+                        .replace(/'/g, "\\'");
+                    const firstImage = p.image_urls[0] || "";
+                    const imageEsc = firstImage
+                        .replace(/\\/g, "\\\\")
+                        .replace(/'/g, "\\'");
                     li.innerHTML = `
   ${p.image_urls.map(url => `<img src="${url}" alt="${p.name}" width="150" height="150">`).join("")}<br/>
 
   <strong>${p.name}</strong> - ₹${p.price.toFixed(2)}<br/>
   ${p.description ? p.description + "<br/>" : ""}
+
   <button onclick="buyProduct(${p.id}, '${p.name}', ${p.price}, '${p.image_urls[0] || ''}')">Buy</button>
   <button onclick="addToCart(${p.id}, '${p.name}', ${p.price}, '${p.image_urls[0] || ''}')">Add to Cart</button>
+
 `;
 
                     li.addEventListener('click', (e) => {
