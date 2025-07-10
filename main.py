@@ -392,7 +392,14 @@ async def buy_product(
     order = Order(buyer=current_user["username"], address=address)
     db.add(order)
     db.flush()
-    db.add(OrderItem(order_id=order.id, product_id=product_id, quantity=1))
+    db.add(
+        OrderItem(
+            order_id=order.id,
+            product_id=product_id,
+            quantity=1,
+            shop_name=product.shop_name,
+        )
+    )
     db.commit()
 
     return {
@@ -419,9 +426,14 @@ async def checkout(
     db.flush()  # Get order.id
 
     for item in request.items:
+        product = db.query(DBProduct).filter(DBProduct.id == item.product_id).first()
+        shop_name = product.shop_name if product else None
         db.add(
             OrderItem(
-                order_id=order.id, product_id=item.product_id, quantity=item.quantity
+                order_id=order.id,
+                product_id=item.product_id,
+                quantity=item.quantity,
+                shop_name=shop_name,
             )
         )
 
@@ -533,6 +545,7 @@ def get_seller_orders(
                     "name": item.product.name,
                     "price": item.product.price,
                     "quantity": item.quantity,
+                    "shop_name": item.shop_name or (item.product.shop_name if item.product else None),
                 }
                 for item in order.items
             ],
@@ -652,6 +665,7 @@ def get_buyer_orders(
                     "name": item.product.name,
                     "price": item.product.price,
                     "quantity": item.quantity,
+                    "shop_name": item.shop_name or (item.product.shop_name if item.product else None),
                 }
                 for item in o.items
             ],
@@ -869,6 +883,7 @@ def get_all_orders(
                         "name": item.product.name if item.product else "[deleted]",
                         "price": item.product.price if item.product else 0,
                         "quantity": item.quantity,
+                        "shop_name": item.shop_name or (item.product.shop_name if item.product else None),
                      }
                     for item in order.items
                 ],

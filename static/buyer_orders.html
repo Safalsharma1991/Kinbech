@@ -46,7 +46,7 @@
                     : '';
                 div.innerHTML = `
                     Address: ${o.address}<br>
-                    ${o.items.map(i => `${i.name} x${i.quantity} - ₹${(i.price * i.quantity).toFixed(2)}`).join('<br>')}<br>
+                    ${o.items.map(i => `${i.shop_name ? i.shop_name + ': ' : ''}${i.name} x${i.quantity} - ₹${(i.price * i.quantity).toFixed(2)}`).join('<br>')}<br>
                     <strong>Total: ₹${o.total.toFixed(2)}</strong><br>
                     Status: ${o.status}<br>
                     Time: ${new Date(o.timestamp).toLocaleString()}<br>

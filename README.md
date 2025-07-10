@@ -12,6 +12,7 @@
 - Admin dashboard to validate or remove products and view all sellers
 - Buyers can place orders and receive notifications when orders are fulfilled
 - Optional shop name, address and phone number for each seller
+- Order items now store the seller's shop name
 - Background task removes products after their expiry date
 - Basic forgot‑password endpoint (placeholder for WhatsApp integration)
 - Clean HTML/CSS frontend
