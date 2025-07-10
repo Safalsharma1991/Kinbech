@@ -865,15 +865,16 @@ def get_all_orders(
                 "phone_number": buyer.phone_number if buyer else None,
                 "address": order.address,
                 "items": [
-                    {
-                        "name": item.product.name,
-                        "price": item.product.price,
+                     {
+                        "name": item.product.name if item.product else "[deleted]",
+                        "price": item.product.price if item.product else 0,
                         "quantity": item.quantity,
-                    }
+                     }
                     for item in order.items
                 ],
                 "total": sum(
-                    item.product.price * item.quantity for item in order.items
+                    (item.product.price if item.product else 0) * item.quantity
+                    for item in order.items
                 ),
                 "timestamp": order.timestamp.isoformat(),
                 "status": order.status,
