@@ -49,12 +49,8 @@ This project is tested with **Python 3.11**.
    ```bash
    pip install -r requirements.txt
    ```
-   # Using Python 3.13?
-   psycopg2-binary does not yet publish wheels for 3.13.
-   Install `psycopg2` from source instead:
-   ```bash
-   pip install psycopg2 --no-binary psycopg2
-   ```
+   The requirements file automatically installs `psycopg2` on Python 3.13+
+   and `psycopg2-binary` otherwise.
 4. **Set `SECRET_KEY` environment variable**
    ```bash
    export SECRET_KEY="your-secret-key"
