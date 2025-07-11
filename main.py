@@ -76,6 +76,9 @@ SECRET_KEY = os.getenv("SECRET_KEY", "secretkey")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
+# Domain suffix for usernames
+USERNAME_DOMAIN = "kinbech.shop"
+
 # Password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -177,9 +180,9 @@ def get_current_user_from_token(
 
 
 def _generate_unique_username(base: str, db: Session) -> str:
-    """Generate a unique username with the kinbechmart.com domain."""
+    """Generate a unique username using the configured domain."""
     while True:
-        candidate = f"{base}{uuid4().hex[:5]}@kinbechmart.com"
+        candidate = f"{base}{uuid4().hex[:5]}@{USERNAME_DOMAIN}"
         if not db.query(DBUser).filter(DBUser.username == candidate).first():
             return candidate
 
@@ -187,7 +190,7 @@ def _generate_unique_username(base: str, db: Session) -> str:
 @app.post("/register", status_code=201)
 async def register(user: UserCreate, db: Session = Depends(get_db)):
     base_name = user.username.split("@")[0]
-    username = f"{base_name}@kinbechmart.com"
+    username = f"{base_name}@{USERNAME_DOMAIN}"
 
     existing = db.query(DBUser).filter(DBUser.username == username).first()
     if existing:
