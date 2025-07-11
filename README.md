@@ -51,6 +51,9 @@
    ```bash
    export SECRET_KEY="your-secret-key"
    ```
+   Make sure this value is long and random when deploying to production.
+   The fallback `"secretkey"` defined in `main.py` is intended for development
+   only.
 
 5. **Run the app**
    ```bash
