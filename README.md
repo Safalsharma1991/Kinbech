@@ -47,13 +47,17 @@
    ```bash
    pip install -r requirements.txt
    ```
+4. **Set `SECRET_KEY` environment variable**
+   ```bash
+   export SECRET_KEY="your-secret-key"
+   ```
 
-4. **Run the app**
+5. **Run the app**
    ```bash
    uvicorn main:app --reload
    ```
 
-5. Open your browser and go to:
+6. Open your browser and go to:
    [http://127.0.0.1:8000](http://127.0.0.1:8000)
 
    Registration is handled directly on this page; there is no separate

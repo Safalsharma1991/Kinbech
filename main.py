@@ -71,7 +71,8 @@ async def root():
 
 
 # JWT settings
-SECRET_KEY = "secretkey"
+# Read secret key from environment variable for security
+SECRET_KEY = os.getenv("SECRET_KEY", "secretkey")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
