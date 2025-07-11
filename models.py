@@ -1,7 +1,6 @@
 # models.py
 from sqlalchemy import Column, Integer, String, Float, ForeignKey, Boolean
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import declarative_base, relationship
 from sqlalchemy import DateTime
 from datetime import datetime
 from pydantic import BaseModel
