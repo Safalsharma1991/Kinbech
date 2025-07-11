@@ -2,7 +2,6 @@ from fastapi import (
     FastAPI,
     HTTPException,
     Depends,
-    status,
     Form,
     Request,
     Body,
@@ -11,7 +10,6 @@ from fastapi import (
 )
 from fastapi.responses import (
     FileResponse,
-    JSONResponse,
     HTMLResponse,
     RedirectResponse,
 )
@@ -20,11 +18,10 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 import logging
 from pydantic import BaseModel
-from typing import Optional, Dict, List
+from typing import Optional, List
 from passlib.context import CryptContext
 from jose import JWTError, jwt
 from datetime import datetime, timedelta
-import json
 import os
 import asyncio
 from sqlalchemy.orm import Session
