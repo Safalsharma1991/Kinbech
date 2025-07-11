@@ -131,7 +131,7 @@
     <div id="register-form" class="card hidden">
       <h2>Register</h2>
       <input type="text" id="reg-username" placeholder="Username" />
-      <p class="note">Username must be unique and end with <code>@kinbechmart.com</code></p>
+      <p class="note">Username must be unique and end with <code>@kinbech.shop</code></p>
       <input type="text" id="reg-fullname" placeholder="Full Name" />
       <input type="password" id="reg-password" placeholder="Password" />
       <button onclick="register()">Register</button>
@@ -177,8 +177,8 @@
         return;
       }
 
-      if(!user.endsWith("@kinbechmart.com")){
-        user = user + "@kinbechmart.com";
+      if(!user.endsWith("@kinbech.shop")){
+        user = user + "@kinbech.shop";
       }
       const formData = new URLSearchParams();
       formData.append("username", user);
@@ -213,8 +213,8 @@
         return;
       }
 
-      if(!username.endsWith("@kinbechmart.com")){
-        username = username + "@kinbechmart.com";
+      if(!username.endsWith("@kinbech.shop")){
+        username = username + "@kinbech.shop";
       }
 
       const payload = {
