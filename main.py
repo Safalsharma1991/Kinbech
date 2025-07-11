@@ -427,13 +427,17 @@ async def checkout(
 
     for item in request.items:
         product = db.query(DBProduct).filter(DBProduct.id == item.product_id).first()
-        shop_name = product.shop_name if product else None
+        if not product:
+            raise HTTPException(status_code=404, detail="Product not found")
+        if not product.is_validated:
+            raise HTTPException(status_code=403, detail="Product not validated")
+
         db.add(
             OrderItem(
                 order_id=order.id,
                 product_id=item.product_id,
                 quantity=item.quantity,
-                shop_name=shop_name,
+                shop_name=product.shop_name,
             )
         )
 
