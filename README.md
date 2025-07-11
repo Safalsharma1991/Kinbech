@@ -49,8 +49,8 @@ This project is tested with **Python 3.11**.
    ```bash
    pip install -r requirements.txt
    ```
-   The requirements file automatically installs `psycopg2` on Python 3.13+
-   and `psycopg2-binary` otherwise.
+   The requirements file installs `psycopg2-binary`, which works across
+   Python versions including 3.13.
 4. **Set `SECRET_KEY` environment variable**
    ```bash
    export SECRET_KEY="your-secret-key"
