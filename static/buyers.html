@@ -101,6 +101,7 @@
 
     <h2>Welcome Buyer!</h2>
     <h3>Available Products</h3>
+    <input type="text" id="search-box" placeholder="Search products..." style="width:100%;padding:8px;margin-bottom:10px;">
     <ul id="product-list">
         <li>Loading products...</li>
     </ul>
@@ -136,6 +137,8 @@
             window.location.href = "/static/index.html";
         }
 
+        let allProducts = [];
+
         async function loadProducts() {
             try {
                 const res = await fetch("/products", {
@@ -143,26 +146,33 @@
                 });
                 if (!res.ok) throw new Error("Failed to load products");
 
-                const products = await res.json();
-                const list = document.getElementById("product-list");
-                list.innerHTML = "";
+                allProducts = await res.json();
+                renderProducts(allProducts);
+            } catch (err) {
+                document.getElementById("product-list").innerHTML = "<li>Error loading products.</li>";
+            }
+        }
 
-                if (products.length === 0) {
-                    list.innerHTML = "<li>No products available.</li>";
-                    return;
-                }
+        function renderProducts(products) {
+            const list = document.getElementById("product-list");
+            list.innerHTML = "";
 
-                products.forEach(p => {
-                    const li = document.createElement("li");
-                    // Escape product name and image URL for use inside onclick strings
-                    const nameEsc = p.name
-                        .replace(/\\/g, "\\\\")
-                        .replace(/'/g, "\\'");
-                    const firstImage = p.image_urls[0] || "";
-                    const imageEsc = firstImage
-                        .replace(/\\/g, "\\\\")
-                        .replace(/'/g, "\\'");
-                    li.innerHTML = `
+            if (products.length === 0) {
+                list.innerHTML = "<li>No products available.</li>";
+                return;
+            }
+
+            products.forEach(p => {
+                const li = document.createElement("li");
+                // Escape product name and image URL for use inside onclick strings
+                const nameEsc = p.name
+                    .replace(/\\/g, "\\\\")
+                    .replace(/'/g, "\\'");
+                const firstImage = p.image_urls[0] || "";
+                const imageEsc = firstImage
+                    .replace(/\\/g, "\\\\")
+                    .replace(/'/g, "\\'");
+                li.innerHTML = `
   ${p.image_urls.map(url => `<img src="${url}" alt="${p.name}" width="150" height="150">`).join("")}<br/>
 
   <strong>${p.name}</strong> - ₹${p.price.toFixed(2)}<br/>
@@ -171,18 +181,20 @@
   <button onclick="addToCart(${p.id}, '${nameEsc}', ${p.price}, '${imageEsc}')">Add to Cart</button>
 `;
 
-                    li.addEventListener('click', (e) => {
-                        if (e.target.tagName !== 'BUTTON') {
-                            openProductModal(p);
-                        }
-                    });
-
-                    list.appendChild(li);
+                li.addEventListener('click', (e) => {
+                    if (e.target.tagName !== 'BUTTON') {
+                        openProductModal(p);
+                    }
                 });
 
-            } catch (err) {
-                document.getElementById("product-list").innerHTML = "<li>Error loading products.</li>";
-            }
+                list.appendChild(li);
+            });
+        }
+
+        function filterProducts() {
+            const term = document.getElementById('search-box').value.toLowerCase();
+            const filtered = allProducts.filter(p => p.name.toLowerCase().includes(term));
+            renderProducts(filtered);
         }
 
         function buyProduct(id, name, price, imageUrl) {
@@ -259,6 +271,7 @@
 
         }
 
+        document.getElementById('search-box').addEventListener('input', filterProducts);
         loadProducts();
         function addToCart(id, name, price, imageUrl) {
             const cart = JSON.parse(localStorage.getItem("cart")) || [];
