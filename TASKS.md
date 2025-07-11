@@ -1,6 +1,6 @@
 # Project Task List
 
-This file tracks future work for the RangeCart project.
+This file tracks future work for the Kinbech project.
 
 ## Admin Features
 
