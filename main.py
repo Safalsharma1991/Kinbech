@@ -36,6 +36,7 @@ from uuid import uuid4
 from pathlib import Path
 
 app = FastAPI()
+app.mount("/static", StaticFiles(directory="static"), name="static")
 Base.metadata.create_all(bind=engine)
 
 
@@ -176,17 +177,6 @@ def get_current_user_from_token(
         }
     except JWTError:
         raise HTTPException(status_code=401, detail="Invalid token")
-
-
-@app.get("/static/admin_register.html", include_in_schema=False)
-async def restricted_admin_register(
-    current_user: dict = Depends(get_current_user_from_token),
-):
-    if current_user["username"] != "safal@kinbech.shop":
-        raise HTTPException(status_code=403, detail="Access denied")
-    return FileResponse("static/admin_register.html")
-
-app.mount("/static", StaticFiles(directory="static"), name="static")
 
 
 def _generate_unique_username(base: str, db: Session) -> str:
