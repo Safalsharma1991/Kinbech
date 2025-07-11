@@ -21,11 +21,13 @@
 
 ## Technology Used
 
-- Python (FastAPI)
+- Python 3.11 (FastAPI)
 - HTML, CSS, JavaScript (frontend)
 - SQLite (database)
 - JWT Token for login
 - Uvicorn to run the app
+
+This project is tested with **Python 3.11**.
 
 ---
 
@@ -46,6 +48,12 @@
 3. **Install required packages**
    ```bash
    pip install -r requirements.txt
+   ```
+   # Using Python 3.13?
+   psycopg2-binary does not yet publish wheels for 3.13.
+   Install `psycopg2` from source instead:
+   ```bash
+   pip install psycopg2 --no-binary psycopg2
    ```
 4. **Set `SECRET_KEY` environment variable**
    ```bash
