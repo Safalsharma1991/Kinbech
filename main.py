@@ -18,6 +18,7 @@ from fastapi.responses import (
 
 from fastapi.staticfiles import StaticFiles
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
+import logging
 from pydantic import BaseModel
 from typing import Optional, Dict, List
 from passlib.context import CryptContext
@@ -36,6 +37,10 @@ from uuid import uuid4
 from pathlib import Path
 
 app = FastAPI()
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 Base.metadata.create_all(bind=engine)
 
@@ -784,7 +789,7 @@ async def process_forgot_password(email: str = Form(...)):
     # 1. Verify email exists
     # 2. Create a reset token
     # 3. Send a reset email or message
-    print(f"Password reset link requested for: {email}")
+    logger.info("Password reset link requested for: %s", email)
     return RedirectResponse(url="/login", status_code=303)
 
 
@@ -803,7 +808,7 @@ async def send_reset_link(payload: ResetRequest):
     reset_link = f"http://127.0.0.1:8000/reset-password/{reset_token}"
 
     # TODO: Replace this with actual WhatsApp API integration
-    print(f"Send this link via WhatsApp: {reset_link} to {payload.number}")
+    logger.info("Send this link via WhatsApp: %s to %s", reset_link, payload.number)
 
     return {"msg": "Reset link sent to your WhatsApp!"}
 
@@ -816,7 +821,7 @@ async def send_username(payload: ResetRequest, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Number not found")
 
     # TODO: Replace this with actual WhatsApp API integration
-    print(f"Send username {user.username} via WhatsApp to {payload.number}")
+    logger.info("Send username %s via WhatsApp to %s", user.username, payload.number)
 
     return {"msg": "Username sent to your WhatsApp!"}
 
