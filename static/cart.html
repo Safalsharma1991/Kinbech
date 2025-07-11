@@ -34,6 +34,44 @@
             height: auto;
         }
 
+        /* Modal styles for image zoom */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            max-width: 90%;
+            text-align: center;
+        }
+
+        .modal-content img {
+            max-width: 300px;
+            transition: transform 0.3s ease;
+            cursor: zoom-in;
+        }
+
+        .modal-content img.zoomed {
+            transform: scale(2);
+            cursor: zoom-out;
+        }
+
+        .close {
+            float: right;
+            font-size: 20px;
+            cursor: pointer;
+        }
+
         button {
             padding: 5px 10px;
         }
@@ -86,8 +124,17 @@
     <button onclick="placeOrder()">Place Order</button>
     <button onclick="goBack()">Back to Products</button>
 
+    <!-- Modal for zooming cart images -->
+    <div id="cart-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeCartModal()">&times;</span>
+            <img id="cart-modal-image" src="" alt="Zoomed item" />
+        </div>
+    </div>
+
     <script>
         let cart = JSON.parse(localStorage.getItem("cart")) || [];
+        let lastTap = 0;
 
         function renderCart() {
             const tbody = document.querySelector("#cart-table tbody");
@@ -99,7 +146,7 @@
             } else {
                 cart.forEach((item, index) => {
                     total += item.price * item.qty;
-                    const imgHtml = item.imageUrl ? `<img class="cart-image" src="${item.imageUrl}" alt="${item.name}">` : "";
+                    const imgHtml = item.imageUrl ? `<img class="cart-image cart-thumb" data-src="${item.imageUrl}" src="${item.imageUrl}" alt="${item.name}">` : "";
                     tbody.innerHTML += `
                         <tr>
                             <td>${imgHtml}</td>
@@ -117,6 +164,10 @@
             }
 
             document.getElementById("total").textContent = `Total: ₹${total.toFixed(2)}`;
+            // Attach click handlers for zoomable images
+            document.querySelectorAll(".cart-thumb").forEach(img => {
+                img.addEventListener("click", () => openCartModal(img.dataset.src));
+            });
         }
 
         function updateQty(index, change) {
@@ -193,6 +244,33 @@
 
         function goBack() {
             window.location.href = "/static/buyers.html";
+        }
+
+        function openCartModal(src) {
+            const img = document.getElementById("cart-modal-image");
+            img.src = src;
+            img.classList.remove("zoomed");
+            document.getElementById("cart-modal").style.display = "flex";
+            img.addEventListener('dblclick', toggleZoom);
+            img.addEventListener('touchend', handleDoubleTap);
+        }
+
+        function closeCartModal() {
+            document.getElementById("cart-modal").style.display = "none";
+        }
+
+        function toggleZoom() {
+            const img = document.getElementById("cart-modal-image");
+            img.classList.toggle("zoomed");
+        }
+
+        function handleDoubleTap(e) {
+            const currentTime = Date.now();
+            if (currentTime - lastTap < 300) {
+                toggleZoom();
+                e.preventDefault();
+            }
+            lastTap = currentTime;
         }
 
 
