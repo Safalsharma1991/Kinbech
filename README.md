@@ -56,10 +56,42 @@
 5. Open your browser and go to:
    [http://127.0.0.1:8000](http://127.0.0.1:8000)
 
-   Registration is handled directly on this page; there is no separate
-   `/register` form route.
+Registration is handled directly on this page; there is no separate
+`/register` form route.
 
 ---
+
+## Inspecting the Database
+
+The application stores its data in a SQLite file named `test.db`. You can
+use the `sqlite3` command line tool to browse its tables and run queries.
+
+### Installing the SQLite CLI
+
+On Debian or Ubuntu systems:
+
+```bash
+sudo apt-get install sqlite3
+```
+
+On macOS with Homebrew:
+
+```bash
+brew install sqlite3
+```
+
+### Viewing `test.db`
+
+Open the database and list the tables:
+
+```bash
+sqlite3 test.db
+sqlite> .tables
+sqlite> SELECT * FROM users LIMIT 5;
+```
+
+Use `.schema` to show the table definitions or any valid SQL commands to
+inspect the stored data.
 
 ## Managing Shop Names
 
