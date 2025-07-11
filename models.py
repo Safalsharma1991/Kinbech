@@ -55,3 +55,16 @@ class OrderItem(Base):
     quantity = Column(Integer)
     order = relationship("Order", back_populates="items")
     product = relationship("Product")
+
+
+class ResetToken(Base):
+    """Password reset tokens associated with a user."""
+
+    __tablename__ = "reset_tokens"
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    token = Column(String, unique=True, index=True)
+    expires_at = Column(DateTime)
+
+    user = relationship("UserModel")
