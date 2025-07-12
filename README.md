@@ -59,12 +59,22 @@ This project is tested with **Python 3.11**.
    The fallback `"secretkey"` defined in `main.py` is intended for development
    only.
 
-5. **Run the app**
+5. **(Optional) Configure Twilio WhatsApp variables**
+   To send real password reset messages over WhatsApp, set the following
+   environment variables before running the app:
+   ```bash
+   export TWILIO_ACCOUNT_SID="your_twilio_sid"
+   export TWILIO_AUTH_TOKEN="your_twilio_auth_token"
+   export TWILIO_WHATSAPP_FROM="whatsapp:+1234567890"  # your Twilio number
+   export APP_BASE_URL="http://127.0.0.1:8000"         # or your deployed URL
+   ```
+
+6. **Run the app**
    ```bash
    uvicorn main:app --reload
    ```
 
-6. Open your browser and go to:
+7. Open your browser and go to:
    [http://127.0.0.1:8000](http://127.0.0.1:8000)
 
 Registration is handled directly on this page; there is no separate

@@ -11,7 +11,7 @@ This file tracks future work for the Kinbech project.
 
 ## Password Reset
 - [ ] Implement real WhatsApp or email integration to send reset links.
-- [ ] Document Twilio environment variables in the README so password reset via WhatsApp can be configured.
+- [x] Document Twilio environment variables in the README so password reset via WhatsApp can be configured.
 
 ## Other Improvements
 
