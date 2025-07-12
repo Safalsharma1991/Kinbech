@@ -141,7 +141,7 @@ These values appear on the seller dashboard where they can be edited anytime.
 
 ## Admin Users
 
-Create an admin account by sending a role of `"admin"` when registering.  Existing admins can also use the form at `/admin/register`, which now requires admin login:
+Create an admin account by sending a role of `"admin"` when registering.  Existing admins can also use the form at `/admin/register`, which is publicly accessible (no login required):
 
 ```bash
 curl -X POST -H "Content-Type: application/json" \
