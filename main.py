@@ -45,6 +45,9 @@ from twilio.rest import Client
 
 app = FastAPI()
 
+# Expose all files in the ./static directory
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -79,6 +82,12 @@ async def start_background_tasks():
 @app.get("/")
 async def root():
     return FileResponse("static/index.html")
+
+
+# Provide a direct route to the Hindi instructions page
+@app.get("/static/instructions_hindi.html", include_in_schema=False)
+async def instructions_hindi_page():
+    return FileResponse("static/instructions_hindi.html")
 
 
 # JWT settings
