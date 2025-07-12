@@ -45,6 +45,9 @@ from twilio.rest import Client
 
 app = FastAPI()
 
+# Expose all files in the ./static directory
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
