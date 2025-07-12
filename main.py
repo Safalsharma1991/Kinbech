@@ -84,6 +84,12 @@ async def root():
     return FileResponse("static/index.html")
 
 
+# Provide a direct route to the Hindi instructions page
+@app.get("/static/instructions_hindi.html", include_in_schema=False)
+async def instructions_hindi_page():
+    return FileResponse("static/instructions_hindi.html")
+
+
 # JWT settings
 # Read secret key from environment variable for security
 SECRET_KEY = os.getenv("SECRET_KEY", "secretkey")
