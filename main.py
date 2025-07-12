@@ -1051,9 +1051,6 @@ async def admin_sellers_page():
 
 
 @app.get("/admin/register", include_in_schema=False)
-async def admin_register_page(
-    current_user: dict = Depends(get_current_user_from_token),
-):
-    """Serve the admin registration form for logged-in admins only."""
-    require_admin(current_user)
+async def admin_register_page():
+    """Serve the admin registration form."""
     return FileResponse("static/admin_register.html")
