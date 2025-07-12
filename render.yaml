@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: kinbech
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host=0.0.0.0 --port=10000
+    runtime: python
+    pythonVersion: 3.12.3
+    plan: free
+    region: oregon
+    branch: main
