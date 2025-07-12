@@ -2,7 +2,6 @@ from fastapi import (
     FastAPI,
     HTTPException,
     Depends,
-    status,
     Form,
     Request,
     Body,
@@ -11,31 +10,44 @@ from fastapi import (
 )
 from fastapi.responses import (
     FileResponse,
-    JSONResponse,
     HTMLResponse,
     RedirectResponse,
 )
 
 from fastapi.staticfiles import StaticFiles
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
+import logging
 from pydantic import BaseModel
-from typing import Optional, Dict, List
+from typing import Optional, List
 from passlib.context import CryptContext
 from jose import JWTError, jwt
 from datetime import datetime, timedelta
-import json
 import os
 import asyncio
 from sqlalchemy.orm import Session
-from models import Base, Order, OrderItem, UserModel as DBUser, Product as DBProduct
+from models import (
+    Base,
+    Order,
+    OrderItem,
+    UserModel as DBUser,
+    Product as DBProduct,
+    ResetToken,
+)
 from database import engine, get_db, SessionLocal
 from schemas import ProductOut
 from fastapi.templating import Jinja2Templates
 import uuid
 from uuid import uuid4
 from pathlib import Path
+import smtplib
+from email.message import EmailMessage
+from twilio.rest import Client
 
 app = FastAPI()
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 Base.metadata.create_all(bind=engine)
 
@@ -75,6 +87,19 @@ async def root():
 SECRET_KEY = os.getenv("SECRET_KEY", "secretkey")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
+
+# Email configuration for password reset
+EMAIL_HOST = os.getenv("EMAIL_HOST")
+EMAIL_PORT = int(os.getenv("EMAIL_PORT", "587"))
+EMAIL_USER = os.getenv("EMAIL_USER")
+EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD")
+EMAIL_FROM = os.getenv("EMAIL_FROM", EMAIL_USER if EMAIL_USER else "")
+
+# Twilio WhatsApp configuration
+TWILIO_ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID")
+TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN")
+TWILIO_WHATSAPP_FROM = os.getenv("TWILIO_WHATSAPP_FROM")
+APP_BASE_URL = os.getenv("APP_BASE_URL", "http://127.0.0.1:8000")
 
 # Domain suffix for usernames
 USERNAME_DOMAIN = "kinbech.shop"
@@ -187,6 +212,54 @@ def _generate_unique_username(base: str, db: Session) -> str:
             return candidate
 
 
+def _create_reset_token(user: DBUser, db: Session) -> str:
+    """Generate and store a password reset token for the user."""
+    token = str(uuid.uuid4())
+    expires_at = datetime.utcnow() + timedelta(hours=1)
+    db_token = ResetToken(user_id=user.id, token=token, expires_at=expires_at)
+    db.add(db_token)
+    db.commit()
+    return token
+
+
+def _send_email(to_email: str, subject: str, body: str):
+    """Send an email if credentials are configured, else log the message."""
+    if not (EMAIL_HOST and EMAIL_USER and EMAIL_PASSWORD):
+        logger.info("Email not configured. Would send to %s: %s", to_email, body)
+        return
+
+    msg = EmailMessage()
+    msg["Subject"] = subject
+    msg["From"] = EMAIL_FROM
+    msg["To"] = to_email
+    msg.set_content(body)
+
+    try:
+        with smtplib.SMTP(EMAIL_HOST, EMAIL_PORT) as server:
+            server.starttls()
+            server.login(EMAIL_USER, EMAIL_PASSWORD)
+            server.send_message(msg)
+    except Exception as e:
+        logger.error("Failed to send email: %s", e)
+
+
+def _send_whatsapp(to_number: str, body: str):
+    """Send a WhatsApp message using Twilio if configured."""
+    if not (TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN and TWILIO_WHATSAPP_FROM):
+        logger.info("Twilio not configured. Would send to %s: %s", to_number, body)
+        return
+
+    try:
+        client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
+        from_number = TWILIO_WHATSAPP_FROM
+        if not from_number.startswith("whatsapp:"):
+            from_number = f"whatsapp:{from_number}"
+        to = to_number if to_number.startswith("whatsapp:") else f"whatsapp:{to_number}"
+        client.messages.create(body=body, from_=from_number, to=to)
+    except Exception as e:
+        logger.error("Failed to send WhatsApp message: %s", e)
+
+
 @app.post("/register", status_code=201)
 async def register(user: UserCreate, db: Session = Depends(get_db)):
     base_name = user.username.split("@")[0]
@@ -240,6 +313,39 @@ async def reset_password(data: ResetPasswordRequest, db: Session = Depends(get_d
     db.commit()
 
     return {"msg": "Password reset successful"}
+
+
+@app.get("/reset-password/{token}", response_class=HTMLResponse)
+async def reset_password_form(token: str, request: Request, db: Session = Depends(get_db)):
+    record = (
+        db.query(ResetToken)
+        .filter(ResetToken.token == token, ResetToken.expires_at > datetime.utcnow())
+        .first()
+    )
+    if not record:
+        return HTMLResponse("Invalid or expired token", status_code=400)
+    return templates.TemplateResponse("reset_password.html", {"request": request, "token": token})
+
+
+@app.post("/reset-password/{token}")
+async def reset_password_token(token: str, new_password: str = Form(...), db: Session = Depends(get_db)):
+    record = (
+        db.query(ResetToken)
+        .filter(ResetToken.token == token, ResetToken.expires_at > datetime.utcnow())
+        .first()
+    )
+    if not record:
+        raise HTTPException(status_code=400, detail="Invalid or expired token")
+
+    user = db.query(DBUser).filter(DBUser.id == record.user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    user.hashed_password = get_password_hash(new_password)
+    db.delete(record)
+    db.commit()
+
+    return RedirectResponse(url="/login", status_code=303)
 
 
 @app.get("/profile")
@@ -779,12 +885,21 @@ async def forgot_password_page(request: Request):
 
 
 @app.post("/forgot-password")
-async def process_forgot_password(email: str = Form(...)):
-    # TODO: Implement actual reset logic or email link
-    # 1. Verify email exists
-    # 2. Create a reset token
-    # 3. Send a reset email or message
-    print(f"Password reset link requested for: {email}")
+async def process_forgot_password(email: str = Form(...), db: Session = Depends(get_db)):
+    """Generate a reset token and email a link to the user."""
+    user = db.query(DBUser).filter(DBUser.username == email).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Email not found")
+
+    token = _create_reset_token(user, db)
+    reset_link = f"{APP_BASE_URL}/reset-password/{token}"
+    _send_email(
+        email,
+        "Password Reset",
+        f"Click the link to reset your password: {reset_link}",
+    )
+
+    logger.info("Password reset link sent to: %s", email)
     return RedirectResponse(url="/login", status_code=303)
 
 
@@ -795,16 +910,17 @@ async def process_forgot_password(email: str = Form(...)):
 
 
 @app.post("/send-reset-link")
-async def send_reset_link(payload: ResetRequest):
-    # Generate unique token
-    reset_token = str(uuid.uuid4())
+async def send_reset_link(payload: ResetRequest, db: Session = Depends(get_db)):
+    """Send a password reset link to the user's WhatsApp number."""
+    user = db.query(DBUser).filter(DBUser.phone_number == payload.number).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Number not found")
 
-    # Save token and associate with user in DB (or mock store)
-    reset_link = f"http://127.0.0.1:8000/reset-password/{reset_token}"
+    token = _create_reset_token(user, db)
+    reset_link = f"{APP_BASE_URL}/reset-password/{token}"
+    _send_whatsapp(payload.number, f"Reset your password here: {reset_link}")
 
-    # TODO: Replace this with actual WhatsApp API integration
-    print(f"Send this link via WhatsApp: {reset_link} to {payload.number}")
-
+    logger.info("Reset link sent via WhatsApp to %s", payload.number)
     return {"msg": "Reset link sent to your WhatsApp!"}
 
 
@@ -815,8 +931,8 @@ async def send_username(payload: ResetRequest, db: Session = Depends(get_db)):
     if not user:
         raise HTTPException(status_code=404, detail="Number not found")
 
-    # TODO: Replace this with actual WhatsApp API integration
-    print(f"Send username {user.username} via WhatsApp to {payload.number}")
+    _send_whatsapp(payload.number, f"Your username is: {user.username}")
+    logger.info("Username sent via WhatsApp to %s", payload.number)
 
     return {"msg": "Username sent to your WhatsApp!"}
 

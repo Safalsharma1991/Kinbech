@@ -21,11 +21,13 @@
 
 ## Technology Used
 
-- Python (FastAPI)
+- Python 3.11 (FastAPI)
 - HTML, CSS, JavaScript (frontend)
 - SQLite (database)
 - JWT Token for login
 - Uvicorn to run the app
+
+This project is tested with **Python 3.11**.
 
 ---
 
@@ -47,10 +49,15 @@
    ```bash
    pip install -r requirements.txt
    ```
+   The requirements file installs `psycopg2-binary`, which works across
+   Python versions including 3.13.
 4. **Set `SECRET_KEY` environment variable**
    ```bash
    export SECRET_KEY="your-secret-key"
    ```
+   Make sure this value is long and random when deploying to production.
+   The fallback `"secretkey"` defined in `main.py` is intended for development
+   only.
 
 5. **Run the app**
    ```bash
@@ -134,7 +141,7 @@ These values appear on the seller dashboard where they can be edited anytime.
 
 ## Admin Users
 
-Create an admin account by sending a role of `"admin"` when registering or by visiting the browser based form at `/admin/register`:
+Create an admin account by sending a role of `"admin"` when registering.  Existing admins can also use the form at `/admin/register`, which now requires admin login:
 
 ```bash
 curl -X POST -H "Content-Type: application/json" \
