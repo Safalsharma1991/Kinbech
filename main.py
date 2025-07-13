@@ -420,7 +420,7 @@ def create_shop(
     phone_number: str = Form(...),
     db: Session = Depends(get_db),
 ):
-    # Ensure the shops table exists before inserting
+    # Ensure the shop table exists before inserting
     Shop.__table__.create(bind=engine, checkfirst=True)
 
     if db.query(Shop).filter(Shop.phone_number == phone_number).first():

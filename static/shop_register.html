@@ -91,12 +91,23 @@
             form3.append('shop_name', name);
             form3.append('address', address);
             form3.append('phone_number', phone);
-            await fetch('/shops', {
-                method: 'POST',
-                body: form3
-            });
-
-            window.location.href = token ? '/static/sellers.html' : '/static/index.html';
+            try {
+                const res = await fetch('/shops', {
+                    method: 'POST',
+                    body: form3
+                });
+                const data = await res.json().catch(() => ({}));
+                if (res.ok) {
+                    msg.textContent = data.msg || 'Shop registered!';
+                    msg.style.color = 'green';
+                } else {
+                    msg.textContent = data.detail || 'Registration failed';
+                    msg.style.color = 'red';
+                }
+            } catch (err) {
+                msg.textContent = 'Registration failed';
+                msg.style.color = 'red';
+            }
         }
 
         function goToAdd() {
