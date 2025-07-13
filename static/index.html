@@ -134,6 +134,11 @@
   
 
   </div>
+  
+<div class="info-card card" id="product-section">
+    <h3 class="about-title">Products</h3>
+    <ul id="product-list" style="list-style:none;padding:0;margin:0"></ul>
+  </div>
 
 
 
@@ -146,23 +151,37 @@
 
 
 
-  <script>
-    let token = localStorage.getItem("access_token");
-    let username = null;
-    
-    
 
-    
- 
-    
-    
+ <script>
+    async function loadPublicProducts() {
+      try {
+        const res = await fetch("/public-products");
+        if (!res.ok) throw new Error("Failed to load products");
+        const products = await res.json();
+        renderProducts(products);
+      } catch (err) {
+        document.getElementById("product-list").innerHTML = "<li>Error loading products.</li>";
+      }
+    }
 
+    function renderProducts(products) {
+      const list = document.getElementById("product-list");
+      list.innerHTML = "";
+      if (products.length === 0) {
+        list.innerHTML = "<li>No products available.</li>";
+        return;
+      }
+      products.forEach(p => {
+        const li = document.createElement("li");
+        li.innerHTML = `
+          ${p.image_urls.map(url => `<img src="${url}" alt="${p.name}" width="100" height="100">`).join("")}<br/>
+          <strong>${p.name}</strong> - ₹${p.price.toFixed(2)}
+        `;
+        list.appendChild(li);
+      });
+    }
 
-
-
-
-
-
+    window.addEventListener("DOMContentLoaded", loadPublicProducts);
   </script>
 
 </body>
