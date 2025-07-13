@@ -4,10 +4,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Kinbech - Login</title>
+  <title>Kinbech </title>
   <style>
     body {
-      background: linear-gradient(135deg, #e0f7fa, #fce4ec);
+      background: lavender;
       font-family: 'Segoe UI', sans-serif;
       display: flex;
       flex-direction: column;
@@ -98,246 +98,59 @@
     .hidden {
       display: none;
     }
+        .logo {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      object-fit: cover;
+      margin: 0 auto 15px;
+      display: block;
+    }
   </style>
 </head>
 
 <body>
 
-  <div class="container" id="form-container">
-    <!-- Login form -->
-    <div id="login" class="card">
-      <h2>Login</h2>
-      <input type="text" id="username" placeholder="Username" />
-      <input type="password" id="password" placeholder="Password" />
-      <button onclick="login()">Login</button>
-      <p id="login-error" class="error"></p>
-      <p class="switch">New user? <a href="#" onclick="toggleRegister()">Register here</a>
-        <span class="divider">|</span>
-        <a href="#" onclick="toggleForgotPassword()">Forgot Password?</a>
-        <span class="divider">|</span>
-        <a href="#" onclick="toggleForgotUsername()">Forgot Username?</a>
         
       </p>
 
     </div>
       <div class="info-card card">
+    <img src="static/Kinbechlogo.jpg" alt="Kinbech Logo" class="logo" />
+
     <h3>About KinBech</h3>
-    <p>KinBech connects local buyers and sellers. Log in or register above, then choose to continue as a buyer or seller from your profile page.</p>
-    <p>Sellers can list products with images and prices. Buyers browse items, add them to the cart, and place orders. Use “Forgot User Name/Forgot Password” if you need to reset your credentials.</p>
-    <p><a href="/static/instructions_hindi.html">हिन्दी में पंजीकरण/लॉगिन निर्देश</a></p>
+    <p>KinBech connects local buyers and sellers. </p>
+    <p>Sellers can list products with images and prices. Buyers browse items, add them to the cart, and place orders. </p>
+        <button onclick="window.location.href='static/shop_register.html'">Start Selling</button>
+  
 
   </div>
 
-    <!-- Registration form -->
-    <div id="register-form" class="card hidden">
-      <h2>Register</h2>
-      <input type="text" id="reg-username" placeholder="Username" />
-      <p class="note">Username must be unique and end with <code>@kinbech.shop</code></p>
-      <input type="text" id="reg-fullname" placeholder="Full Name" />
-      <input type="password" id="reg-password" placeholder="Password" />
-      <button onclick="register()">Register</button>
-      <p id="register-msg" class="success"></p>
-      <p id="register-error" class="error"></p>
-      <p class="switch">Already have an account? <a href="#" onclick="toggleLogin()">Login here</a></p>
-    </div>
-  </div>
+
 
   <!-- Forgot Password form -->
-  <div id="forgot-form" class="card hidden">
-    <h2>Reset Password</h2>
-    <input type="text" id="forgot-number" placeholder="Enter your WhatsApp number" />
-    <button onclick="sendResetLink()">Send Reset Link</button>
-    <p id="forgot-msg" class="success"></p>
-    <p id="forgot-error" class="error"></p>
-    <p class="switch">Remembered your password? <a href="#" onclick="toggleLogin()">Login here</a></p>
-  </div>
+
 
 
   <!-- Forgot Username form -->
-  <div id="forgot-username-form" class="card hidden">
-    <h2>Recover Username</h2>
-    <input type="text" id="username-number" placeholder="Enter your WhatsApp number" />
-    <button onclick="sendUsername()">Send Username</button>
-    <p id="username-msg" class="success"></p>
-    <p id="username-error" class="error"></p>
-    <p class="switch">Remembered it? <a href="#" onclick="toggleLogin()">Login here</a></p>
-  </div>
+
 
 
 
   <script>
     let token = localStorage.getItem("access_token");
     let username = null;
-    async function login() {
-      let user = document.getElementById("username").value.trim();
-      const pass = document.getElementById("password").value.trim();
-      document.getElementById("login-error").textContent = "";
+    
+    
 
-      if (!user || !pass) {
-        document.getElementById("login-error").textContent = "Enter username and password.";
-        return;
-      }
+    
+ 
+    
+    
 
-      if(!user.endsWith("@kinbech.shop")){
-        user = user + "@kinbech.shop";
-      }
-      const formData = new URLSearchParams();
-      formData.append("username", user);
-      formData.append("password", pass);
 
-      try {
-        const res = await fetch("/token", {
-          method: "POST",
-          body: formData,
-        });
 
-        if (!res.ok) throw new Error("Invalid credentials");
-        const data = await res.json();
 
-        localStorage.setItem("access_token", data.access_token);  // ✅ Store token
-        window.location.href = "/static/profile.html";  // or main app page
-      } catch (err) {
-        document.getElementById("login-error").textContent = "Login failed: " + err.message;
-      }
-    }
-
-    async function register() {
-      let username = document.getElementById("reg-username").value.trim();
-      const fullName = document.getElementById("reg-fullname").value.trim();
-      const password = document.getElementById("reg-password").value.trim();
-
-      document.getElementById("register-msg").textContent = "";
-      document.getElementById("register-error").textContent = "";
-
-      if (!username || !password || !fullName) {
-        document.getElementById("register-error").textContent = "All fields required.";
-        return;
-      }
-
-      if(!username.endsWith("@kinbech.shop")){
-        username = username + "@kinbech.shop";
-      }
-
-      const payload = {
-        username,
-        full_name: fullName,
-        password,
-        role: ["buyer", "seller"]  // ✅ Auto assign both
-      };
-
-      try {
-        const res = await fetch("/register", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
-        });
-
-        if (!res.ok) {
-          const err = await res.json();
-          throw new Error(err.detail || "Registration failed");
-        }
-
-        const data = await res.json();
-        document.getElementById("register-msg").textContent = data.msg;
-      } catch (err) {
-        document.getElementById("register-error").textContent = err.message;
-      }
-    }
-
-  function toggleRegister() {
-      document.getElementById("forgot-form").classList.add("hidden");
-      document.getElementById("forgot-username-form").classList.add("hidden");
-      document.getElementById("login").classList.add("hidden");
-      document.getElementById("register-form").classList.remove("hidden");
-      document.getElementById("form-container").classList.remove("hidden");
-    }
-
-    function toggleLogin() {
-      document.getElementById("forgot-form").classList.add("hidden");
-      document.getElementById("forgot-username-form").classList.add("hidden");
-      document.getElementById("register-form").classList.add("hidden");
-      document.getElementById("login").classList.remove("hidden");
-      document.getElementById("form-container").classList.remove("hidden");
-    }
-    // Auto-load view based on #buyer or #seller from profile page
-    window.addEventListener("load", () => {
-      const hash = window.location.hash;
-      if (token) {
-        if (hash === "#buyer") {
-          showBuyerView();
-        } else if (hash === "#seller") {
-          showSellerView();
-        }
-      }
-    });
-
-    function toggleForgotPassword() {
-      document.getElementById("login").classList.add("hidden");
-      document.getElementById("register-form").classList.add("hidden");
-      document.getElementById("forgot-username-form").classList.add("hidden");
-      document.getElementById("form-container").classList.add("hidden");
-      document.getElementById("forgot-form").classList.remove("hidden");
-    }
-
-    function toggleForgotUsername() {
-      document.getElementById("login").classList.add("hidden");
-      document.getElementById("register-form").classList.add("hidden");
-      document.getElementById("forgot-form").classList.add("hidden");
-      document.getElementById("form-container").classList.add("hidden");
-      document.getElementById("forgot-username-form").classList.remove("hidden");
-    }
-
-    async function sendResetLink() {
-      const number = document.getElementById("forgot-number").value.trim();
-      document.getElementById("forgot-msg").textContent = "";
-      document.getElementById("forgot-error").textContent = "";
-
-      if (!number) {
-        document.getElementById("forgot-error").textContent = "Enter a valid WhatsApp number.";
-        return;
-      }
-
-      try {
-        const res = await fetch("/send-reset-link", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ number })
-        });
-
-        if (!res.ok) throw new Error("Could not send reset link");
-
-        const data = await res.json();
-        document.getElementById("forgot-msg").textContent = data.msg;
-      } catch (err) {
-        document.getElementById("forgot-error").textContent = err.message;
-      }
-    }
-
-    async function sendUsername() {
-      const number = document.getElementById("username-number").value.trim();
-      document.getElementById("username-msg").textContent = "";
-      document.getElementById("username-error").textContent = "";
-
-      if (!number) {
-        document.getElementById("username-error").textContent = "Enter a valid WhatsApp number.";
-        return;
-      }
-
-      try {
-        const res = await fetch("/send-username", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ number })
-        });
-
-        if (!res.ok) throw new Error("Could not send username");
-
-        const data = await res.json();
-        document.getElementById("username-msg").textContent = data.msg;
-      } catch (err) {
-        document.getElementById("username-error").textContent = err.message;
-      }
-    }
 
 
 
