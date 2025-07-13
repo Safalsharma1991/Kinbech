@@ -137,6 +137,21 @@ curl -X POST \
 
 These values appear on the seller dashboard where they can be edited anytime.
 
+### Registering Your Shop
+
+Shop information is also stored in a dedicated `shops` table. Submit the shop
+name, address and phone number to `/shops`. The table is created automatically
+if it doesn't already exist and uses the phone number as the primary key.
+
+```bash
+curl -X POST \
+  -H "Authorization: Bearer <token>" \
+  -F shop_name="MyStore" \
+  -F address="123 Market St" \
+  -F phone_number="9876543210" \
+  http://127.0.0.1:8000/shops
+```
+
 ---
 
 ## Admin Users
