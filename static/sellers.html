@@ -68,7 +68,6 @@
     <input type="text" id="product-desc" placeholder="Description (optional)" />
     <input type="number" id="product-price" placeholder="Price" step="0.01" />
     <input type="number" id="product-range" placeholder="Delivery Range (km)" />
-    <input type="datetime-local" id="product-expiry" placeholder="Expiry Date & Time" />
     <input type="file" id="product-image" accept="image/*" multiple>
 
     <button onclick="addProduct()">Add Product</button>
@@ -80,10 +79,6 @@
         <button onclick="goToMenu()"
             style="background-color: #007bff; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer;">
             Menu
-        </button>
-        <button onclick="logout()"
-            style="background-color: red; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer;">
-            Logout
         </button>
     </div>
 
@@ -131,7 +126,6 @@
             const desc = document.getElementById("product-desc").value.trim();
             const price = parseFloat(document.getElementById("product-price").value);
             const range = parseInt(document.getElementById("product-range").value);
-            const expiry = document.getElementById("product-expiry").value;
             const imageInput = document.getElementById("product-image");
 
             if (!name || isNaN(price) || !imageInput.files.length) {
@@ -146,7 +140,6 @@
             formData.append("description", desc);
             formData.append("price", price);
             formData.append("delivery_range_km", range);
-            formData.append("expiry_datetime", expiry);
             for (let i = 0; i < imageInput.files.length; i++) {
                 formData.append("images", imageInput.files[i]);
             }
@@ -172,7 +165,6 @@
                 document.getElementById("product-desc").value = "";
                 document.getElementById("product-price").value = "";
                 document.getElementById("product-range").value = "";
-                document.getElementById("product-expiry").value = "";
                 document.getElementById("product-image").value = "";
                 // Refresh the products list so the new item appears
                 loadMyProducts();
@@ -180,12 +172,6 @@
                 document.getElementById("seller-msg").style.color = "red";
                 document.getElementById("seller-msg").textContent = err.message;
             }
-        }
-
-
-        function logout() {
-            localStorage.removeItem("access_token");
-            window.location.href = "/static/index.html";  // login page
         }
 
         function goToMenu() {
