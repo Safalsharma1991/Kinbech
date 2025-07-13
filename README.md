@@ -145,7 +145,6 @@ if it doesn't already exist and uses the phone number as the primary key.
 
 ```bash
 curl -X POST \
-  -H "Authorization: Bearer <token>" \
   -F shop_name="MyStore" \
   -F address="123 Market St" \
   -F phone_number="9876543210" \
