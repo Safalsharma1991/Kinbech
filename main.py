@@ -418,7 +418,6 @@ def create_shop(
     shop_name: str = Form(...),
     address: str = Form(...),
     phone_number: str = Form(...),
-    current_user: dict = Depends(get_current_user_from_token),
     db: Session = Depends(get_db),
 ):
     # Ensure the shops table exists before inserting
