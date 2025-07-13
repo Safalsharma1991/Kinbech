@@ -484,7 +484,24 @@ async def get_products(
 
     return products
 
-
+@app.get("/public-products")
+async def get_public_products(db: Session = Depends(get_db)):
+    """Return validated products without requiring authentication."""
+    db_products = db.query(DBProduct).filter(DBProduct.is_validated == True).all()
+    products = []
+    for p in db_products:
+        products.append({
+            "id": p.id,
+            "name": p.name,
+            "description": p.description,
+            "price": p.price,
+            "seller": p.seller,
+            "shop_name": p.shop_name,
+            "image_urls": p.image_url.split(","),
+            "delivery_range_km": p.delivery_range_km,
+            "expiry_datetime": p.expiry_datetime,
+        })
+    return products
 @app.post("/buy/{product_id}")
 async def buy_product(
     product_id: int,
