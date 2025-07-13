@@ -140,9 +140,6 @@
             formData.append("description", desc);
             formData.append("price", price);
             formData.append("delivery_range_km", range);
-            const defaultExpiry = new Date();
-            defaultExpiry.setDate(defaultExpiry.getDate() + 7);
-            formData.append("expiry_datetime", defaultExpiry.toISOString());
             for (let i = 0; i < imageInput.files.length; i++) {
                 formData.append("images", imageInput.files[i]);
             }
