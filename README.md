@@ -16,7 +16,7 @@
 - Background task removes products after their expiry date
 - WhatsApp-based username and password recovery
 - Clean HTML/CSS frontend
-
+- Responsive pages optimized for mobile devices
 ---
 
 ## Technology Used

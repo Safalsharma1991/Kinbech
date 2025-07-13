@@ -7,7 +7,7 @@
   <title>Kinbech </title>
   <style>
     body {
-      background: linear-gradient(135deg, #e0f7fa, #fce4ec);
+      background: lavender;
       font-family: 'Segoe UI', sans-serif;
       display: flex;
       flex-direction: column;
@@ -98,6 +98,14 @@
     .hidden {
       display: none;
     }
+        .logo {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      object-fit: cover;
+      margin: 0 auto 15px;
+      display: block;
+    }
   </style>
 </head>
 
@@ -112,7 +120,8 @@
 
     <h3>About KinBech</h3>
     <p>KinBech connects local buyers and sellers. </p>
-    <p>Sellers can list products with images and prices. Buyers browse items, add them to the cart, and place orders. Use “Forgot User Name/Forgot Password” if you need to reset your credentials.</p>
+    <p>Sellers can list products with images and prices. Buyers browse items, add them to the cart, and place orders. </p>
+        <button onclick="window.location.href='static/shop_register.html'">Start Selling</button>
   
 
   </div>
