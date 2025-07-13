@@ -75,24 +75,6 @@
     <input type="file" id="product-image" accept="image/*" multiple>
 
     <button onclick="addProduct()">Add Product</button>
-    <table id="my-products" style="width:100%;margin-top:20px;border-collapse: collapse;">
-        <thead>
-            <tr>
-                <th style="border-bottom:1px solid #ccc;text-align:left;padding:8px">Name</th>
-                <th style="border-bottom:1px solid #ccc;text-align:left;padding:8px">Price</th>
-            </tr>
-        </thead>
-        <tbody></tbody>
-    </table>
-
-
-    <div
-        style="display: flex; justify-content: space-between; align-items: center; padding: 10px 20px; background-color: #f8f9fa; border-bottom: 1px solid #ccc;">
-        <button onclick="goToMenu()"
-            style="background-color: #007bff; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer;">
-            Menu
-        </button>
-    </div>
 
 
     <script>
@@ -116,28 +98,6 @@
                     window.location.href = "/static/shop_register.html";
                 }
             }
-        }
-
-        async function loadMyProducts() {
-            const res = await fetch("/api/my-products", {
-                headers: { Authorization: "Bearer " + token }
-            });
-            if (!res.ok) return;
-            const data = await res.json();
-            const table = document.getElementById("my-products").querySelector("tbody");
-            table.innerHTML = "";
-            data.forEach(p => {
-                const row = document.createElement("tr");
-                const nameCell = document.createElement("td");
-                nameCell.textContent = p.name;
-                nameCell.style.padding = "8px";
-                const priceCell = document.createElement("td");
-                priceCell.textContent = `₹${p.price}`;
-                priceCell.style.padding = "8px";
-                row.appendChild(nameCell);
-                row.appendChild(priceCell);
-                table.appendChild(row);
-            });
         }
 
         async function addProduct() {
@@ -184,8 +144,6 @@
                 document.getElementById("product-price").value = "";
                 document.getElementById("product-range").value = "";
                 document.getElementById("product-image").value = "";
-                // Refresh the products list so the new item appears
-                loadMyProducts();
                 window.location.href = "/static/shop_register.html";
             } catch (err) {
                 document.getElementById("seller-msg").style.color = "red";
@@ -193,12 +151,7 @@
             }
         }
 
-        function goToMenu() {
-            window.location.href = "/static/profile.html";  // go back to profile page
-        }
-
         loadShopName();
-        loadMyProducts();
 
     </script>
 
