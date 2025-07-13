@@ -81,7 +81,7 @@ async def start_background_tasks():
 
 @app.get("/")
 async def root():
-    return FileResponse("static/index.html")
+    return FileResponse("static/profile.html")
 
 
 # JWT settings
