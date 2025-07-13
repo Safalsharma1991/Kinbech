@@ -439,7 +439,7 @@ async def create_product(
     description: str = Form(""),
     price: float = Form(...),
     delivery_range_km: int = Form(...),
-    expiry_datetime: str = Form(...),
+    expiry_datetime: Optional[str] = Form(None),
     shop_name: str = Form(...),
     images: List[UploadFile] = File(...),
     current_user: dict = Depends(get_current_user_from_token),
@@ -447,6 +447,10 @@ async def create_product(
 ):
     # ✅ Create directory if it doesn't exist
     os.makedirs("static/uploads", exist_ok=True)
+
+    if not expiry_datetime:
+        # use a far future timestamp so products don't expire automatically
+        expiry_datetime = "2099-12-31T23:59:59"
 
     image_urls = []
 
