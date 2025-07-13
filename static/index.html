@@ -4,10 +4,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Kinbech </title>
+  <title>KinBech </title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap" rel="stylesheet" />
   <style>
     body {
-      background: linear-gradient(135deg, #e0f7fa, #fce4ec);
+      background: lavender;
       font-family: 'Segoe UI', sans-serif;
       display: flex;
       flex-direction: column;
@@ -98,6 +99,24 @@
     .hidden {
       display: none;
     }
+        .logo {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      object-fit: cover;
+      margin: 0 auto 15px;
+      display: block;
+    }
+        .about-title {
+      font-family: 'Poppins', sans-serif;
+      font-size: 24px;
+      color: #3f51b5;
+      margin-bottom: 10px;
+    }
+    .about-text {
+      font-family: 'Poppins', sans-serif;
+      font-size: 16px;
+    }
   </style>
 </head>
 
@@ -109,12 +128,16 @@
     </div>
       <div class="info-card card">
     <img src="static/Kinbechlogo.jpg" alt="Kinbech Logo" class="logo" />
-
-    <h3>About KinBech</h3>
-    <p>KinBech connects local buyers and sellers. </p>
-    <p>Sellers can list products with images and prices. Buyers browse items, add them to the cart, and place orders. Use “Forgot User Name/Forgot Password” if you need to reset your credentials.</p>
+ <h3 class="about-title">About KinBech</h3>
+    <p class="about-text">KinBech connects local buyers and sellers.</p>
+    <p class="about-text">Sellers can list products with images and prices. Buyers browse items, add them to the cart, and place orders.</p>  <button onclick="window.location.href='static/shop_register.html'">Start Selling</button>
   
 
+  </div>
+  
+<div class="info-card card" id="product-section">
+    <h3 class="about-title">Products</h3>
+    <ul id="product-list" style="list-style:none;padding:0;margin:0"></ul>
   </div>
 
 
@@ -128,23 +151,37 @@
 
 
 
-  <script>
-    let token = localStorage.getItem("access_token");
-    let username = null;
-    
-    
 
-    
- 
-    
-    
+ <script>
+    async function loadPublicProducts() {
+      try {
+        const res = await fetch("/public-products");
+        if (!res.ok) throw new Error("Failed to load products");
+        const products = await res.json();
+        renderProducts(products);
+      } catch (err) {
+        document.getElementById("product-list").innerHTML = "<li>Error loading products.</li>";
+      }
+    }
 
+    function renderProducts(products) {
+      const list = document.getElementById("product-list");
+      list.innerHTML = "";
+      if (products.length === 0) {
+        list.innerHTML = "<li>No products available.</li>";
+        return;
+      }
+      products.forEach(p => {
+        const li = document.createElement("li");
+        li.innerHTML = `
+          ${p.image_urls.map(url => `<img src="${url}" alt="${p.name}" width="100" height="100">`).join("")}<br/>
+          <strong>${p.name}</strong> - ₹${p.price.toFixed(2)}
+        `;
+        list.appendChild(li);
+      });
+    }
 
-
-
-
-
-
+    window.addEventListener("DOMContentLoaded", loadPublicProducts);
   </script>
 
 </body>
