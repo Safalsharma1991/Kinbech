@@ -72,6 +72,7 @@
     <input type="text" id="product-desc" placeholder="Description (optional)" />
     <input type="number" id="product-price" placeholder="Price" step="0.01" />
     <input type="number" id="product-range" placeholder="Delivery Range (km)" />
+    <input type="text" id="seller-phone" placeholder="Registered Phone Number" />
     <input type="file" id="product-image" accept="image/*" multiple>
 
     <button onclick="addProduct()">Add Product</button>
@@ -86,17 +87,27 @@
         }
 
         let shopName = "";
+        let registeredPhone = "";
 
-        async function loadShopName() {
-            const res = await fetch("/shop/name", {
+        async function loadShopInfo() {
+            const resName = await fetch("/shop/name", {
                 headers: { Authorization: "Bearer " + token }
             });
-            if (res.ok) {
-                const data = await res.json();
+            if (resName.ok) {
+                const data = await resName.json();
                 shopName = data.shop_name || "";
-                if (!shopName) {
-                    window.location.href = "/static/shop_register.html";
-                }
+            }
+
+            const resDetails = await fetch("/seller/details", {
+                headers: { Authorization: "Bearer " + token }
+            });
+            if (resDetails.ok) {
+                const data = await resDetails.json();
+                registeredPhone = data.phone_number || "";
+            }
+
+            if (!shopName || !registeredPhone) {
+                window.location.href = "/static/shop_register.html";
             }
         }
 
@@ -105,11 +116,19 @@
             const desc = document.getElementById("product-desc").value.trim();
             const price = parseFloat(document.getElementById("product-price").value);
             const range = parseInt(document.getElementById("product-range").value);
+            const phone = document.getElementById("seller-phone").value.trim();
             const imageInput = document.getElementById("product-image");
 
             if (!name || isNaN(price) || !imageInput.files.length) {
                 document.getElementById("seller-msg").style.color = "red";
                 document.getElementById("seller-msg").textContent = "All fields are required.";
+                return;
+            }
+
+            if (phone !== registeredPhone) {
+                document.getElementById("seller-msg").style.color = "red";
+                document.getElementById("seller-msg").textContent =
+                    "Shop isn't registered yet. Please register the shop first and then add product.";
                 return;
             }
 
@@ -151,7 +170,7 @@
             }
         }
 
-        loadShopName();
+        loadShopInfo();
 
     </script>
 
