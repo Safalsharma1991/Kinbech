@@ -45,10 +45,12 @@ from twilio.rest import Client
 
 app = FastAPI()
 
+# Expose all files in the ./static directory
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-app.mount("/static", StaticFiles(directory="static"), name="static")
 Base.metadata.create_all(bind=engine)
 
 
@@ -79,7 +81,7 @@ async def start_background_tasks():
 
 @app.get("/")
 async def root():
-    return FileResponse("static/index.html")
+    return FileResponse("static/profile.html")
 
 
 # JWT settings
