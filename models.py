@@ -68,3 +68,13 @@ class ResetToken(Base):
     expires_at = Column(DateTime)
 
     user = relationship("UserModel")
+
+
+class Shop(Base):
+    """Stores registered shop details."""
+
+    __tablename__ = "shops"
+
+    phone_number = Column(String, primary_key=True)
+    shop_name = Column(String)
+    address = Column(String)
