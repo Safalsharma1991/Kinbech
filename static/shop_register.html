@@ -86,6 +86,16 @@
                 body: form2
             });
 
+            const form3 = new FormData();
+            form3.append('shop_name', name);
+            form3.append('address', address);
+            form3.append('phone_number', phone);
+            await fetch('/shops', {
+                method: 'POST',
+                headers: { Authorization: 'Bearer ' + token },
+                body: form3
+            });
+
             window.location.href = '/static/sellers.html';
         }
     </script>

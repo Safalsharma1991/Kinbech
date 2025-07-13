@@ -32,6 +32,7 @@ from models import (
     UserModel as DBUser,
     Product as DBProduct,
     ResetToken,
+    Shop,
 )
 from database import engine, get_db, SessionLocal
 from schemas import ProductOut
@@ -410,6 +411,23 @@ def update_seller_details(
     user.phone_number = phone_number
     db.commit()
     return {"address": user.address, "phone_number": user.phone_number}
+
+
+@app.post("/shops")
+def create_shop(
+    shop_name: str = Form(...),
+    address: str = Form(...),
+    phone_number: str = Form(...),
+    current_user: dict = Depends(get_current_user_from_token),
+    db: Session = Depends(get_db),
+):
+    if db.query(Shop).filter(Shop.phone_number == phone_number).first():
+        raise HTTPException(status_code=400, detail="Phone number already registered")
+
+    shop = Shop(phone_number=phone_number, shop_name=shop_name, address=address)
+    db.add(shop)
+    db.commit()
+    return {"msg": "Shop registered"}
 
 
 @app.post("/products")
