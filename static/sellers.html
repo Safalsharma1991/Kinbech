@@ -56,6 +56,10 @@
         .msg.error {
             color: red;
         }
+
+        table th, table td {
+            border-bottom: 1px solid #ccc;
+        }
     </style>
 </head>
 
@@ -71,7 +75,15 @@
     <input type="file" id="product-image" accept="image/*" multiple>
 
     <button onclick="addProduct()">Add Product</button>
-    <ul id="my-products"></ul>
+    <table id="my-products" style="width:100%;margin-top:20px;border-collapse: collapse;">
+        <thead>
+            <tr>
+                <th style="border-bottom:1px solid #ccc;text-align:left;padding:8px">Name</th>
+                <th style="border-bottom:1px solid #ccc;text-align:left;padding:8px">Price</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
 
 
     <div
@@ -112,12 +124,19 @@
             });
             if (!res.ok) return;
             const data = await res.json();
-            const list = document.getElementById("my-products");
-            list.innerHTML = "";
+            const table = document.getElementById("my-products").querySelector("tbody");
+            table.innerHTML = "";
             data.forEach(p => {
-                const li = document.createElement("li");
-                li.textContent = `${p.name} - ₹${p.price}`;
-                list.appendChild(li);
+                const row = document.createElement("tr");
+                const nameCell = document.createElement("td");
+                nameCell.textContent = p.name;
+                nameCell.style.padding = "8px";
+                const priceCell = document.createElement("td");
+                priceCell.textContent = `₹${p.price}`;
+                priceCell.style.padding = "8px";
+                row.appendChild(nameCell);
+                row.appendChild(priceCell);
+                table.appendChild(row);
             });
         }
 
@@ -167,6 +186,7 @@
                 document.getElementById("product-image").value = "";
                 // Refresh the products list so the new item appears
                 loadMyProducts();
+                window.location.href = "/static/shop_register.html";
             } catch (err) {
                 document.getElementById("seller-msg").style.color = "red";
                 document.getElementById("seller-msg").textContent = err.message;
@@ -178,6 +198,7 @@
         }
 
         loadShopName();
+        loadMyProducts();
 
     </script>
 
