@@ -421,6 +421,9 @@ def create_shop(
     current_user: dict = Depends(get_current_user_from_token),
     db: Session = Depends(get_db),
 ):
+    # Ensure the shops table exists before inserting
+    Shop.__table__.create(bind=engine, checkfirst=True)
+
     if db.query(Shop).filter(Shop.phone_number == phone_number).first():
         raise HTTPException(status_code=400, detail="Phone number already registered")
 
