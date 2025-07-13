@@ -47,6 +47,7 @@
     <p style="margin-top:20px;">Already registered?</p>
     <button onclick="goToAdd()">Add Products</button>
     <button onclick="goToMyProducts()">View My Products</button>
+    <button onclick="continueBuying()">Continue Buying</button>
 
     <script>
         const token = localStorage.getItem('access_token');
@@ -109,6 +110,10 @@
 
         function goToMyProducts() {
             window.location.href = '/my-products';
+        }
+
+        function continueBuying() {
+            window.location.href = '/static/index.html';
         }
     </script>
 </body>
