@@ -73,7 +73,8 @@ class ResetToken(Base):
 class Shop(Base):
     """Stores registered shop details."""
 
-    __tablename__ = "shops"
+    # Use a singular table name for clarity
+    __tablename__ = "shop"
 
     phone_number = Column(String, primary_key=True)
     shop_name = Column(String)

@@ -139,9 +139,9 @@ These values appear on the seller dashboard where they can be edited anytime.
 
 ### Registering Your Shop
 
-Shop information is also stored in a dedicated `shops` table. Submit the shop
-name, address and phone number to `/shops`. The table is created automatically
-if it doesn't already exist and uses the phone number as the primary key.
+Shop information is stored in a dedicated `shop` table. Submit the shop name,
+address and phone number to `/shops`. The table is created automatically if it
+doesn't already exist and uses the phone number as the primary key.
 
 ```bash
 curl -X POST \
