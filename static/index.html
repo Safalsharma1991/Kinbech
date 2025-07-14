@@ -188,7 +188,10 @@
         const li = document.createElement("li");
         li.innerHTML = `
           ${p.image_urls.map(url => `<img src="${url}" alt="${p.name}" width="100" height="100">`).join("")}<br/>
-          <strong>${p.name}</strong> - ₹${p.price.toFixed(2)}
+          <strong>${p.name}</strong><br/>
+          ${p.description ? `<span>${p.description}</span><br/>` : ""}
+          ₹${p.price.toFixed(2)}<br/>
+          Delivery Range: ${p.delivery_range_km} km
         `;
         list.appendChild(li);
       });
