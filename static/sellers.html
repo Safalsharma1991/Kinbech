@@ -124,12 +124,13 @@
                 shopName = data.shop_name || "";
             }
 
-            const resDetails = await fetch("/seller/details", {
+            const resPhone = await fetch("/shop/phone", {
                 headers: { Authorization: "Bearer " + token }
             });
-            if (resDetails.ok) {
-                const data = await resDetails.json();
+            if (resPhone.ok) {
+                const data = await resPhone.json();
                 registeredPhone = data.phone_number || "";
+                document.getElementById("seller-phone").value = registeredPhone;
             }
 
 

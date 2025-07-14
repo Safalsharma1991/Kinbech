@@ -438,6 +438,24 @@ def create_or_update_shop(
         return {"msg": "Shop registered successfully"}
 
 
+@app.get("/shop/phone")
+def get_shop_phone(
+    current_user: dict = Depends(get_current_user_from_token),
+    db: Session = Depends(get_db),
+):
+    """Fetch the phone number for the logged in user's shop from the Shop table."""
+    user = db.query(DBUser).filter(DBUser.username == current_user["username"]).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    phone = user.phone_number
+    if not phone:
+        return {"phone_number": ""}
+
+    shop = db.query(Shop).filter(Shop.phone_number == phone).first()
+    return {"phone_number": shop.phone_number if shop else ""}
+
+
 @app.post("/products")
 async def create_product(
     name: str = Form(...),
