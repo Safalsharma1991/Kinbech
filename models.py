@@ -1,10 +1,11 @@
 # models.py
-from sqlalchemy import Column, Integer, String, Float, ForeignKey, Boolean
+from sqlalchemy import Column, Integer, String, Float, ForeignKey, Boolean, create_engine, UniqueConstraint
 from sqlalchemy.orm import declarative_base, relationship
 from sqlalchemy import DateTime
 from datetime import datetime
 from pydantic import BaseModel
 from typing import List
+from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base()
 
@@ -71,11 +72,12 @@ class ResetToken(Base):
 
 
 class Shop(Base):
-    """Stores registered shop details."""
+    __tablename__ = 'shop'
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, nullable=False)
+    address = Column(String, nullable=False)
+    phone_number = Column(String, unique=True, nullable=False)
 
-    # Use a singular table name for clarity
-    __tablename__ = "shop"
-
-    phone_number = Column(String, primary_key=True)
-    shop_name = Column(String)
-    address = Column(String)
+    __table_args__ = (
+        UniqueConstraint('phone_number', name='uix_phone_number'),
+    )

@@ -412,24 +412,29 @@ def update_seller_details(
     db.commit()
     return {"address": user.address, "phone_number": user.phone_number}
 
-
 @app.post("/shops")
-def create_shop(
+def create_or_update_shop(
     shop_name: str = Form(...),
     address: str = Form(...),
     phone_number: str = Form(...),
-    db: Session = Depends(get_db),
+    db: Session = Depends(get_db)
 ):
-    # Ensure the shop table exists before inserting
-    Shop.__table__.create(bind=engine, checkfirst=True)
-
-    if db.query(Shop).filter(Shop.phone_number == phone_number).first():
-        raise HTTPException(status_code=400, detail="Phone number already registered")
-
-    shop = Shop(phone_number=phone_number, shop_name=shop_name, address=address)
-    db.add(shop)
-    db.commit()
-    return {"msg": "Shop registered"}
+    existing_shop = db.query(Shop).filter(Shop.phone_number == phone_number).first()
+    
+    if existing_shop:
+        # Update existing shop
+        existing_shop.name = shop_name
+        existing_shop.address = address
+        db.commit()
+        db.refresh(existing_shop)
+        return {"msg": "Shop updated successfully"}
+    else:
+        # Create new shop
+        new_shop = Shop(name=shop_name, address=address, phone_number=phone_number)
+        db.add(new_shop)
+        db.commit()
+        db.refresh(new_shop)
+        return {"msg": "Shop registered successfully"}
 
 
 @app.post("/products")
