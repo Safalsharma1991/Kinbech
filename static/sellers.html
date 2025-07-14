@@ -141,8 +141,9 @@
             const desc = document.getElementById("product-desc").value.trim();
             const price = parseFloat(document.getElementById("product-price").value);
             const range = parseInt(document.getElementById("product-range").value);
-            const phone = document.getElementById("seller-phone").value.trim();
             const imageInput = document.getElementById("product-image");
+
+       
 
             if (!name || isNaN(price) || !imageInput.files.length) {
                 document.getElementById("seller-msg").style.color = "red";
@@ -150,12 +151,25 @@
                 return;
             }
 
-            if (phone !== registeredPhone) {
-                document.getElementById("seller-msg").style.color = "red";
-                document.getElementById("seller-msg").textContent =
-                    "Shop isn't registered yet. Please register the shop first and then add product.";
-                return;
-            }
+            const phone = prompt("Enter your shop phone number to verify:") || "";
+            if (!phone) return;
+
+             try {
+        const response = await fetch("/verify-shop", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ phone_number: phone })
+        });
+
+ const data = await response.json();
+        if (!data.exists) {
+            document.getElementById("seller-msg").style.color = "red";
+            document.getElementById("seller-msg").textContent =
+                "Shop isn't registered yet. Please register the shop first and then add product.";
+            return;
+        }
 
             const formData = new FormData();
             formData.append("name", name);
@@ -169,7 +183,7 @@
             }
 
             try {
-                const res = await fetch("/products", {
+                const res = await fetch("/added_products", {
                     method: "POST",
                     headers: { Authorization: "Bearer " + token },
                     body: formData
