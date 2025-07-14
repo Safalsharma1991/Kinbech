@@ -129,8 +129,7 @@
             if (resPhone.ok) {
                 const data = await resPhone.json();
                 registeredPhone = data.phone_number || "";
-             
-            }
+
 
 
         }
@@ -143,7 +142,8 @@
             const range = parseInt(document.getElementById("product-range").value);
             const imageInput = document.getElementById("product-image");
 
-       
+            const phone = prompt("Enter your shop phone number to verify:") || "";
+
 
             if (!name || isNaN(price) || !imageInput.files.length) {
                 document.getElementById("seller-msg").style.color = "red";
@@ -214,8 +214,8 @@
                 document.getElementById("product-price").value = "";
                 document.getElementById("product-range").value = "";
                 document.getElementById("product-image").value = "";
-                // Stay on this page so the seller can add more products
-                // without being redirected back to the shop registration page
+                // Redirect to home page to see the product under the Products section
+                window.location.href = '/static/index.html';
             } catch (err) {
                 document.getElementById("seller-msg").style.color = "red";
                 document.getElementById("seller-msg").textContent = err.message;
