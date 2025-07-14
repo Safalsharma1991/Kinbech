@@ -30,6 +30,12 @@
         button:hover {
             background-color: #218838;
         }
+        .primary-button {
+            background-color: #3f51b5;
+        }
+        .primary-button:hover {
+            background-color: #303f9f;
+        }
         #msg {
             margin-top: 10px;
             font-weight: bold;
@@ -45,8 +51,8 @@
     <p id="msg"></p>
 
     <p style="margin-top:20px;">Already registered?</p>
-    <button onclick="goToAdd()">Add Products</button>
-    <button onclick="continueBuying()">Continue Buying</button>
+    <button class="primary-button" onclick="goToAdd()">Add Products</button>
+    <button class="primary-button" onclick="continueBuying()">Continue Buying</button>
 
     <h3 style="margin-top:20px;">My Products</h3>
     <div id="my-products">Loading...</div>
