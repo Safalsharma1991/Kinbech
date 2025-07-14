@@ -51,7 +51,7 @@
     <p id="msg"></p>
 
     <p style="margin-top:20px;">Already registered?</p>
-    <button id="add-btn" class="primary-button" style="display:none;" onclick="goToAdd()">Add Products</button>
+    <button class="primary-button" onclick="goToAdd()">Add Products</button>
     <button class="primary-button" onclick="continueBuying()">Continue Buying</button>
 
 
@@ -125,10 +125,8 @@
         if (res.ok) {
             msg.textContent = data.msg || 'Shop registered!';
             msg.style.color = 'green';
-            document.getElementById('add-btn').style.display = 'inline-block';
         } else {
             msg.textContent = data.detail || 'Registration failed';
-            document.getElementById('add-btn').style.display = 'none';
         }
     } catch (err) {
         msg.textContent = 'Registration failed due to network error.';
