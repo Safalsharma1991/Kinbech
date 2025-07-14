@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Phone Registration</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 400px;
+            margin: 40px auto;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+        }
+        input {
+            width: 100%;
+            padding: 8px;
+            margin: 6px 0;
+            box-sizing: border-box;
+        }
+        button {
+            padding: 10px 16px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #msg {
+            margin-top: 10px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h2>One-Time Admin Registration</h2>
+    <input type="text" id="phone" placeholder="Phone Number" />
+    <button onclick="registerAdminPhone()">Register</button>
+    <p id="msg"></p>
+    <p><a href="/static/index.html">Back to Home</a></p>
+
+    <script>
+        async function registerAdminPhone() {
+            const phone = document.getElementById('phone').value.trim();
+            if (!phone) {
+                document.getElementById('msg').textContent = 'Enter phone number';
+                document.getElementById('msg').style.color = 'red';
+                return;
+            }
+            document.getElementById('msg').textContent = '';
+            const res = await fetch('/admin/phone-register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ phone_number: phone })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                localStorage.setItem('access_token', data.access_token);
+                window.location.href = '/static/admin_dashboard.html';
+            } else {
+                document.getElementById('msg').textContent = data.detail || 'Error';
+                document.getElementById('msg').style.color = 'red';
+            }
+        }
+    </script>
+</body>
+</html>

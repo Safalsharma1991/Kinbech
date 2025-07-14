@@ -155,6 +155,8 @@ curl -X POST \
 
 ## Admin Users
 
+One-time admin setup is provided at `/admin/phone-register`. It only asks for a phone number and automatically creates the first admin. After registration you are logged in and forwarded to the admin dashboard.
+
 Create an admin account by sending a role of `"admin"` when registering.  Existing admins can also use the form at `/admin/register`, which is publicly accessible (no login required):
 
 ```bash
