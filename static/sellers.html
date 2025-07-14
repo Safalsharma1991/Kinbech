@@ -163,7 +163,8 @@
                 document.getElementById("product-price").value = "";
                 document.getElementById("product-range").value = "";
                 document.getElementById("product-image").value = "";
-                window.location.href = "/static/shop_register.html";
+                // Stay on this page so the seller can add more products
+                // without being redirected back to the shop registration page
             } catch (err) {
                 document.getElementById("seller-msg").style.color = "red";
                 document.getElementById("seller-msg").textContent = err.message;
