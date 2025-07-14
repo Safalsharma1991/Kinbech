@@ -33,6 +33,7 @@ from models import (
     Product as DBProduct,
     ResetToken,
     Shop,
+    AddedProduct,
 )
 from database import engine, get_db, SessionLocal
 from schemas import ProductOut
@@ -445,12 +446,17 @@ async def create_product(
     delivery_range_km: int = Form(...),
     expiry_datetime: Optional[str] = Form(None),
     shop_name: str = Form(...),
+    phone_number: str = Form(...),
     images: List[UploadFile] = File(...),
     current_user: dict = Depends(get_current_user_from_token),
     db: Session = Depends(get_db),
 ):
     # ✅ Create directory if it doesn't exist
     os.makedirs("static/uploads", exist_ok=True)
+
+    user = db.query(DBUser).filter(DBUser.username == current_user["username"]).first()
+    if not user or user.phone_number != phone_number:
+        raise HTTPException(status_code=400, detail="Phone number does not match registered user")
 
     if not expiry_datetime:
         # use a far future timestamp so products don't expire automatically
@@ -478,7 +484,14 @@ async def create_product(
         expiry_datetime=expiry_datetime,
     )
 
+    log_entry = AddedProduct(
+        user_id=user.id,
+        product_name=name,
+        details=description,
+    )
+
     db.add(new_product)
+    db.add(log_entry)
     db.commit()
     db.refresh(new_product)
     return {"msg": "Product added successfully"}
