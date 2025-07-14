@@ -1126,7 +1126,8 @@ async def admin_phone_register_page():
 
 @app.post("/admin/phone-register", include_in_schema=False)
 async def admin_phone_register(
-    phone_number: str = Body(...), db: Session = Depends(get_db)
+    phone_number: str = Body(..., embed=True), db: Session = Depends(get_db)
+
 ):
     """Register a new admin using only a phone number once."""
     # If any admin already exists, block new registrations
