@@ -60,61 +60,81 @@
     <script>
         const token = localStorage.getItem('access_token');
 
-        async function saveShop() {
-            const name = document.getElementById('shop-name').value.trim();
-            const address = document.getElementById('address').value.trim();
-            const phone = document.getElementById('phone').value.trim();
-            const msg = document.getElementById('msg');
-            msg.textContent = '';
+  async function saveShop() {
+    const name = document.getElementById('shop-name').value.trim();
+    const address = document.getElementById('address').value.trim();
+    const phone = document.getElementById('phone').value.trim();
+    const msg = document.getElementById('msg');
+    msg.textContent = '';
+    msg.style.color = 'red';
 
-            if (!name) {
-                msg.textContent = 'Shop name required';
-                msg.style.color = 'red';
-                return;
-            }
+    // Field validation
+    if (!name || !address || !phone) {
+        msg.textContent = 'All fields (Shop Name, Address, and Phone Number) are required.';
+        return;
+    }
 
-            if (token) {
-                const form = new FormData();
-                form.append('name', name);
-                let res = await fetch('/shop/name', {
-                    method: 'POST',
-                    headers: { Authorization: 'Bearer ' + token },
-                    body: form
-                });
-                if (res.ok) {
-                    const form2 = new FormData();
-                    form2.append('address', address);
-                    form2.append('phone_number', phone);
-                    await fetch('/seller/details', {
-                        method: 'POST',
-                        headers: { Authorization: 'Bearer ' + token },
-                        body: form2
-                    });
-                }
-            }
+    // Validate phone number format: only digits, and ideally 10 digits
+    const phoneRegex = /^[0-9]{10}$/;
+    if (!phoneRegex.test(phone)) {
+        msg.textContent = 'Phone number must be 10 digits and unique.';
+        return;
+    }
 
-            const form3 = new FormData();
-            form3.append('shop_name', name);
-            form3.append('address', address);
-            form3.append('phone_number', phone);
-            try {
-                const res = await fetch('/shops', {
-                    method: 'POST',
-                    body: form3
-                });
-                const data = await res.json().catch(() => ({}));
-                if (res.ok) {
-                    msg.textContent = data.msg || 'Shop registered!';
-                    msg.style.color = 'green';
-                } else {
-                    msg.textContent = data.detail || 'Registration failed';
-                    msg.style.color = 'red';
-                }
-            } catch (err) {
-                msg.textContent = 'Registration failed';
-                msg.style.color = 'red';
-            }
+    // Optional: You can add a uniqueness check here if you have an endpoint for it.
+    // Example:
+    /*
+    let checkRes = await fetch(`/check-phone?phone=${encodeURIComponent(phone)}`);
+    let checkData = await checkRes.json();
+    if (!checkRes.ok || checkData.exists) {
+        msg.textContent = 'This phone number is already registered.';
+        return;
+    }
+    */
+
+    // If token is available, send authenticated data
+    if (token) {
+        const form = new FormData();
+        form.append('name', name);
+        let res = await fetch('/shop/name', {
+            method: 'POST',
+            headers: { Authorization: 'Bearer ' + token },
+            body: form
+        });
+        if (res.ok) {
+            const form2 = new FormData();
+            form2.append('address', address);
+            form2.append('phone_number', phone);
+            await fetch('/seller/details', {
+                method: 'POST',
+                headers: { Authorization: 'Bearer ' + token },
+                body: form2
+            });
         }
+    }
+
+    // Final registration
+    const form3 = new FormData();
+    form3.append('shop_name', name);
+    form3.append('address', address);
+    form3.append('phone_number', phone);
+    try {
+        const res = await fetch('/shops', {
+            method: 'POST',
+            body: form3
+        });
+        const data = await res.json().catch(() => ({}));
+        if (res.ok) {
+            msg.textContent = data.msg || 'Shop registered!';
+            msg.style.color = 'green';
+        } else {
+            msg.textContent = data.detail || 'Registration failed';
+        }
+    } catch (err) {
+        msg.textContent = 'Registration failed due to network error.';
+    }
+}
+
 
         function goToAdd() {
             window.location.href = '/static/sellers.html';
