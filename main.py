@@ -1102,3 +1102,40 @@ async def admin_sellers_page():
 async def admin_register_page():
     """Serve the admin registration form."""
     return FileResponse("static/admin_register.html")
+
+
+# One-time admin phone registration page
+@app.get("/admin/phone-register", include_in_schema=False)
+async def admin_phone_register_page():
+    """Serve the phone based admin registration page."""
+    return FileResponse("static/admin_phone_register.html")
+
+
+@app.post("/admin/phone-register", include_in_schema=False)
+async def admin_phone_register(
+    phone_number: str = Body(...), db: Session = Depends(get_db)
+):
+    """Register a new admin using only a phone number once."""
+    # If any admin already exists, block new registrations
+    existing_admin = db.query(DBUser).filter(DBUser.role.like("%admin%"))
+    if existing_admin.first():
+        raise HTTPException(status_code=400, detail="Admin already registered")
+
+    username = f"{phone_number}@{USERNAME_DOMAIN}"
+    if db.query(DBUser).filter(DBUser.username == username).first():
+        raise HTTPException(status_code=400, detail="Phone already registered")
+
+    random_password = uuid4().hex
+    db_user = DBUser(
+        username=username,
+        full_name="Admin",
+        hashed_password=get_password_hash(random_password),
+        role="admin",
+        phone_number=phone_number,
+    )
+    db.add(db_user)
+    db.commit()
+    db.refresh(db_user)
+
+    token = create_access_token(data={"sub": db_user.username})
+    return {"access_token": token}
