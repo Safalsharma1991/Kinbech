@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify Phone</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 400px;
+            margin: 40px auto;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+        }
+        input {
+            width: 100%;
+            padding: 8px;
+            margin: 6px 0;
+            box-sizing: border-box;
+        }
+        button {
+            padding: 10px 16px;
+            background-color: #3f51b5;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #303f9f;
+        }
+        #msg {
+            margin-top: 10px;
+            font-weight: bold;
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <h2>Enter Phone Number</h2>
+    <input type="text" id="phone" placeholder="Phone Number" />
+    <button onclick="continueToProducts()">Continue</button>
+    <p id="msg"></p>
+
+    <script>
+        function continueToProducts() {
+            const phone = document.getElementById('phone').value.trim();
+            const msg = document.getElementById('msg');
+            msg.textContent = '';
+            if(!phone) {
+                msg.textContent = 'Please enter phone number';
+                return;
+            }
+            localStorage.setItem('user_phone', phone);
+            window.location.href = '/static/my_products.html';
+        }
+    </script>
+</body>
+</html>
