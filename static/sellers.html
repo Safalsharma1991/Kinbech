@@ -90,6 +90,19 @@
     <button class="primary-button" onclick="addProduct()">Add Product</button>
     <button class="primary-button" onclick="window.location.href='index.html'" style="margin-left:10px;">Back to Home</button>
 
+    <!-- Preview table for newly added products -->
+    <table id="added-products" style="width:100%; margin-top:20px; border-collapse: collapse;">
+        <thead>
+            <tr>
+                <th>Image</th>
+                <th>Name</th>
+                <th>Price</th>
+                <th>Description</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
 
     <script>
         const token = localStorage.getItem("access_token");
@@ -150,6 +163,7 @@
             formData.append("shop_name", shopName);
             formData.append("description", desc);
             formData.append("price", price);
+            formData.append("delivery_range_km", range);
             for (let i = 0; i < imageInput.files.length; i++) {
                 formData.append("images", imageInput.files[i]);
             }
@@ -170,6 +184,16 @@
                 document.getElementById("seller-msg").style.color = "green";
                 document.getElementById("seller-msg").textContent = "Product added successfully!";
 
+                // Show one-time preview in the table
+                const tbody = document.getElementById("added-products").querySelector("tbody");
+                const row = document.createElement("tr");
+                const imgCell = document.createElement("td");
+                const url = URL.createObjectURL(imageInput.files[0]);
+                imgCell.innerHTML = `<img src="${url}" alt="${name}" width="60">`;
+                row.appendChild(imgCell);
+                row.innerHTML += `<td>${name}</td><td>${price}</td><td>${desc}</td>`;
+                tbody.appendChild(row);
+
                 // Clear inputs
                 document.getElementById("product-name").value = "";
                 document.getElementById("product-desc").value = "";
@@ -184,8 +208,7 @@
             }
         }
 
-        
-
+        window.addEventListener('DOMContentLoaded', loadShopInfo);
     </script>
 
 </body>
