@@ -1,5 +1,5 @@
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, declarative_base
 from models import Base
 
 SQLALCHEMY_DATABASE_URL = "postgresql://kinbech_database_user:mi55OxsKZfBm83ziODhz9joYmIsw4O1s@dpg-d1qdci3e5dus73e59sbg-a.oregon-postgres.render.com/kinbech_database"
