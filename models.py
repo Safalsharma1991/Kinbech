@@ -81,3 +81,16 @@ class Shop(Base):
     __table_args__ = (
         UniqueConstraint('phone_number', name='uix_phone_number'),
     )
+
+
+class AddedProduct(Base):
+    """Log of all added products with minimal details."""
+
+    __tablename__ = "added_products"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    product_name = Column(String, nullable=False)
+    details = Column(String, nullable=True)
+
+    user = relationship("UserModel")

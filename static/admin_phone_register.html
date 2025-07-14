@@ -62,11 +62,14 @@
                 localStorage.setItem('access_token', data.access_token);
                 window.location.href = '/static/admin_dashboard.html';
             } else {
+
                 let msg = data.detail;
                 if (Array.isArray(msg)) {
                     msg = msg[0]?.msg;
                 }
-                document.getElementById('msg').textContent = msg || 'Error';
+
+                document.getElementById('msg').textContent = data.detail || 'Error';
+
                 document.getElementById('msg').style.color = 'red';
             }
         }
