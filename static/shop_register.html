@@ -117,26 +117,7 @@
         function continueBuying() {
             window.location.href = '/static/index.html';
         }
-
-        async function loadMyProducts() {
-            const res = await fetch('/api/my-products', { headers: { Authorization: 'Bearer ' + token } });
-            const list = document.getElementById('my-products');
-            list.innerHTML = '';
-            if (!res.ok) {
-                list.textContent = 'Unable to load products.';
-                return;
-            }
-            const data = await res.json();
-            if (data.length === 0) {
-                list.innerHTML = '<p>No products yet.</p>';
-            } else {
-                data.forEach(p => {
-                    const div = document.createElement('div');
-                    div.textContent = `${p.name} - \u20B9${p.price}`;
-                    list.appendChild(div);
-                });
-            }
-        }
+        
 
         
     </script>
