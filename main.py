@@ -119,6 +119,8 @@ class UserCreate(BaseModel):
     address: Optional[str] = None
     phone: Optional[str] = None
 
+class PhoneCheckRequest(BaseModel):
+    phone_number: str
 
 class Token(BaseModel):
     access_token: str
@@ -1076,6 +1078,10 @@ def admin_delete_product(
     db.commit()
     return {"msg": "Product deleted"}
 
+@app.post("/verify-shop")
+def verify_shop(request: PhoneCheckRequest, db: Session = Depends(get_db)):
+    shop = db.query(Shop).filter(Shop.phone_number == request.phone_number).first()
+    return {"exists": bool(shop)}
 
 @app.get("/admin/orders")
 def get_all_orders(
