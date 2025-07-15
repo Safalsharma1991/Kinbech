@@ -207,14 +207,13 @@
                 row.innerHTML += `<td>${name}</td><td>${price}</td><td>${desc}</td>`;
                 tbody.appendChild(row);
 
-                // Clear inputs
+                // Clear inputs so seller can add another product if desired
                 document.getElementById("product-name").value = "";
                 document.getElementById("product-desc").value = "";
                 document.getElementById("product-price").value = "";
                 document.getElementById("product-range").value = "";
                 document.getElementById("product-image").value = "";
-                // Redirect to home page to see the product under the Products section
-                window.location.href = '/static/sellers.html';
+                // Do not refresh the page so the preview remains visible
             } catch (err) {
                 document.getElementById("seller-msg").style.color = "red";
                 document.getElementById("seller-msg").textContent = err.message;
