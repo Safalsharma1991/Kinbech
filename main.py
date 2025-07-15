@@ -475,8 +475,8 @@ async def create_product(
     # ✅ Create directory if it doesn't exist
     os.makedirs("static/uploads", exist_ok=True)
 
-    user = db.query(DBUser).filter(DBUser.username == current_user["username"]).first()
-    if not user or user.phone_number != phone_number:
+    shop = db.query(Shop).filter(Shop.phone_number == phone_number).first()
+    if not shop or shop.phone_number != phone_number:
         raise HTTPException(status_code=400, detail="Phone number does not match registered user")
 
 
