@@ -1,10 +1,11 @@
 # models.py
-from sqlalchemy import Column, Integer, String, Float, ForeignKey, Boolean
+from sqlalchemy import Column, Integer, String, Float, ForeignKey, Boolean, create_engine, UniqueConstraint
 from sqlalchemy.orm import declarative_base, relationship
 from sqlalchemy import DateTime
 from datetime import datetime
 from pydantic import BaseModel
 from typing import List
+from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base()
 
@@ -66,5 +67,30 @@ class ResetToken(Base):
     user_id = Column(Integer, ForeignKey("users.id"))
     token = Column(String, unique=True, index=True)
     expires_at = Column(DateTime)
+
+    user = relationship("UserModel")
+
+
+class Shop(Base):
+    __tablename__ = 'shop'
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, nullable=False)
+    address = Column(String, nullable=False)
+    phone_number = Column(String, unique=True, nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint('phone_number', name='uix_phone_number'),
+    )
+
+
+class AddedProduct(Base):
+    """Log of all added products with minimal details."""
+
+    __tablename__ = "added_products"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    product_name = Column(String, nullable=False)
+    details = Column(String, nullable=True)
 
     user = relationship("UserModel")

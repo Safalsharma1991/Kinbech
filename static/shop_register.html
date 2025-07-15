@@ -30,6 +30,12 @@
         button:hover {
             background-color: #218838;
         }
+        .primary-button {
+            background-color: #3f51b5;
+        }
+        .primary-button:hover {
+            background-color: #303f9f;
+        }
         #msg {
             margin-top: 10px;
             font-weight: bold;
@@ -40,47 +46,60 @@
     <h2>Register Your Shop</h2>
     <input type="text" id="shop-name" placeholder="Shop Name" />
     <input type="text" id="address" placeholder="Address" />
-    <input type="text" id="phone" placeholder="Phone Number" />
+    <input type="text" id="phone" placeholder="Phone Number? Phone number must be 10 digits and unique." />
     <button onclick="saveShop()">Save</button>
     <p id="msg"></p>
 
     <p style="margin-top:20px;">Already registered?</p>
-    <button onclick="goToAdd()">Add Products</button>
-    <button onclick="goToMyProducts()">View My Products</button>
+    <button class="primary-button" onclick="goToAdd()">Add Products</button>
+    <button class="primary-button" onclick="continueBuying()">Continue Buying</button>
+
 
     <script>
         const token = localStorage.getItem('access_token');
-        if (!token) {
-            window.location.href = '/static/index.html';
-        }
 
-        async function saveShop() {
-            const name = document.getElementById('shop-name').value.trim();
-            const address = document.getElementById('address').value.trim();
-            const phone = document.getElementById('phone').value.trim();
-            const msg = document.getElementById('msg');
-            msg.textContent = '';
+  async function saveShop() {
+    const name = document.getElementById('shop-name').value.trim();
+    const address = document.getElementById('address').value.trim();
+    const phone = document.getElementById('phone').value.trim();
+    const msg = document.getElementById('msg');
+    msg.textContent = '';
+    msg.style.color = 'red';
 
-            if (!name) {
-                msg.textContent = 'Shop name required';
-                msg.style.color = 'red';
-                return;
-            }
+    // Field validation
+    if (!name || !address || !phone) {
+        msg.textContent = 'All fields (Shop Name, Address, and Phone Number) are required.';
+        return;
+    }
 
-            const form = new FormData();
-            form.append('name', name);
-            let res = await fetch('/shop/name', {
-                method: 'POST',
-                headers: { Authorization: 'Bearer ' + token },
-                body: form
-            });
-            if (!res.ok) {
-                const err = await res.json();
-                msg.textContent = err.detail || 'Error';
-                msg.style.color = 'red';
-                return;
-            }
+    // Validate phone number format: only digits, and ideally 10 digits
+    const phoneRegex = /^[0-9]{10}$/;
+    if (!phoneRegex.test(phone)) {
+        msg.textContent = 'Phone number must be 10 digits and unique.';
+        return;
+    }
 
+    // Optional: You can add a uniqueness check here if you have an endpoint for it.
+    // Example:
+    /*
+    let checkRes = await fetch(`/check-phone?phone=${encodeURIComponent(phone)}`);
+    let checkData = await checkRes.json();
+    if (!checkRes.ok || checkData.exists) {
+        msg.textContent = 'This phone number is already registered.';
+        return;
+    }
+    */
+
+    // If token is available, send authenticated data
+    if (token) {
+        const form = new FormData();
+        form.append('name', name);
+        let res = await fetch('/shop/name', {
+            method: 'POST',
+            headers: { Authorization: 'Bearer ' + token },
+            body: form
+        });
+        if (res.ok) {
             const form2 = new FormData();
             form2.append('address', address);
             form2.append('phone_number', phone);
@@ -89,17 +108,42 @@
                 headers: { Authorization: 'Bearer ' + token },
                 body: form2
             });
-
-            window.location.href = '/static/sellers.html';
         }
+    }
+
+    // Final registration
+    const form3 = new FormData();
+    form3.append('shop_name', name);
+    form3.append('address', address);
+    form3.append('phone_number', phone);
+    try {
+        const res = await fetch('/shops', {
+            method: 'POST',
+            body: form3
+        });
+        const data = await res.json().catch(() => ({}));
+        if (res.ok) {
+            msg.textContent = data.msg || 'Shop registered!';
+            msg.style.color = 'green';
+        } else {
+            msg.textContent = data.detail || 'Registration failed';
+        }
+    } catch (err) {
+        msg.textContent = 'Registration failed due to network error.';
+    }
+}
+
 
         function goToAdd() {
             window.location.href = '/static/sellers.html';
         }
 
-        function goToMyProducts() {
-            window.location.href = '/my-products';
+        function continueBuying() {
+            window.location.href = '/static/index.html';
         }
+        
+
+        
     </script>
 </body>
 </html>

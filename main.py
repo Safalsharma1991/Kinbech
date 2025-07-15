@@ -32,6 +32,8 @@ from models import (
     UserModel as DBUser,
     Product as DBProduct,
     ResetToken,
+    Shop,
+    AddedProduct,
 )
 from database import engine, get_db, SessionLocal
 from schemas import ProductOut
@@ -117,6 +119,8 @@ class UserCreate(BaseModel):
     address: Optional[str] = None
     phone: Optional[str] = None
 
+class PhoneCheckRequest(BaseModel):
+    phone_number: str
 
 class Token(BaseModel):
     access_token: str
@@ -411,6 +415,48 @@ def update_seller_details(
     db.commit()
     return {"address": user.address, "phone_number": user.phone_number}
 
+@app.post("/shops")
+def create_or_update_shop(
+    shop_name: str = Form(...),
+    address: str = Form(...),
+    phone_number: str = Form(...),
+    db: Session = Depends(get_db)
+):
+    existing_shop = db.query(Shop).filter(Shop.phone_number == phone_number).first()
+    
+    if existing_shop:
+        # Update existing shop
+        existing_shop.name = shop_name
+        existing_shop.address = address
+        db.commit()
+        db.refresh(existing_shop)
+        return {"msg": "Shop updated successfully"}
+    else:
+        # Create new shop
+        new_shop = Shop(name=shop_name, address=address, phone_number=phone_number)
+        db.add(new_shop)
+        db.commit()
+        db.refresh(new_shop)
+        return {"msg": "Shop registered successfully"}
+
+
+@app.get("/shop/phone")
+def get_shop_phone(
+    current_user: dict = Depends(get_current_user_from_token),
+    db: Session = Depends(get_db),
+):
+    """Fetch the phone number for the logged in user's shop from the Shop table."""
+    user = db.query(DBUser).filter(DBUser.username == current_user["username"]).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    phone = user.phone_number
+    if not phone:
+        return {"phone_number": ""}
+
+    shop = db.query(Shop).filter(Shop.phone_number == phone).first()
+    return {"phone_number": shop.phone_number if shop else ""}
+
 
 @app.post("/products")
 async def create_product(
@@ -418,14 +464,23 @@ async def create_product(
     description: str = Form(""),
     price: float = Form(...),
     delivery_range_km: int = Form(...),
-    expiry_datetime: str = Form(...),
+    expiry_datetime: Optional[str] = Form(None),
     shop_name: str = Form(...),
+    phone_number: str = Form(...),
     images: List[UploadFile] = File(...),
     current_user: dict = Depends(get_current_user_from_token),
     db: Session = Depends(get_db),
 ):
     # ✅ Create directory if it doesn't exist
     os.makedirs("static/uploads", exist_ok=True)
+
+    user = db.query(DBUser).filter(DBUser.username == current_user["username"]).first()
+    if not user or user.phone_number != phone_number:
+        raise HTTPException(status_code=400, detail="Phone number does not match registered user")
+
+    if not expiry_datetime:
+        # use a far future timestamp so products don't expire automatically
+        expiry_datetime = "2099-12-31T23:59:59"
 
     image_urls = []
 
@@ -449,7 +504,14 @@ async def create_product(
         expiry_datetime=expiry_datetime,
     )
 
+    log_entry = AddedProduct(
+        user_id=user.id,
+        product_name=name,
+        details=description,
+    )
+
     db.add(new_product)
+    db.add(log_entry)
     db.commit()
     db.refresh(new_product)
     return {"msg": "Product added successfully"}
@@ -1016,6 +1078,10 @@ def admin_delete_product(
     db.commit()
     return {"msg": "Product deleted"}
 
+@app.post("/verify-shop")
+def verify_shop(request: PhoneCheckRequest, db: Session = Depends(get_db)):
+    shop = db.query(Shop).filter(Shop.phone_number == request.phone_number).first()
+    return {"exists": bool(shop)}
 
 @app.get("/admin/orders")
 def get_all_orders(
@@ -1073,3 +1139,41 @@ async def admin_sellers_page():
 async def admin_register_page():
     """Serve the admin registration form."""
     return FileResponse("static/admin_register.html")
+
+
+# One-time admin phone registration page
+@app.get("/admin/phone-register", include_in_schema=False)
+async def admin_phone_register_page():
+    """Serve the phone based admin registration page."""
+    return FileResponse("static/admin_phone_register.html")
+
+
+@app.post("/admin/phone-register", include_in_schema=False)
+async def admin_phone_register(
+    phone_number: str = Body(..., embed=True), db: Session = Depends(get_db)
+
+):
+    """Register a new admin using only a phone number once."""
+    # If any admin already exists, block new registrations
+    existing_admin = db.query(DBUser).filter(DBUser.role.like("%admin%"))
+    if existing_admin.first():
+        raise HTTPException(status_code=400, detail="Admin already registered")
+
+    username = f"{phone_number}@{USERNAME_DOMAIN}"
+    if db.query(DBUser).filter(DBUser.username == username).first():
+        raise HTTPException(status_code=400, detail="Phone already registered")
+
+    random_password = uuid4().hex
+    db_user = DBUser(
+        username=username,
+        full_name="Admin",
+        hashed_password=get_password_hash(random_password),
+        role="admin",
+        phone_number=phone_number,
+    )
+    db.add(db_user)
+    db.commit()
+    db.refresh(db_user)
+
+    token = create_access_token(data={"sub": db_user.username})
+    return {"access_token": token}

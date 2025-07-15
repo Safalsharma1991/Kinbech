@@ -137,9 +137,33 @@ curl -X POST \
 
 These values appear on the seller dashboard where they can be edited anytime.
 
+### Registering Your Shop
+
+Shop information is stored in a dedicated `shop` table. Submit the shop name,
+address and phone number to `/shops`. The table is created automatically if it
+doesn't already exist and uses the phone number as the primary key.
+
+```bash
+curl -X POST \
+  -F shop_name="MyStore" \
+  -F address="123 Market St" \
+  -F phone_number="9876543210" \
+  http://127.0.0.1:8000/shops
+```
+
 ---
 
 ## Admin Users
+
+
+One-time admin setup is provided at `/admin/phone-register`. It only asks for a phone number and automatically creates the first admin. After registration you are logged in and forwarded to the admin dashboard. You can also call this endpoint directly with JSON:
+
+```bash
+curl -X POST -H "Content-Type: application/json" \
+     -d '{"phone_number": "9876543210"}' \
+     http://127.0.0.1:8000/admin/phone-register
+```
+
 
 Create an admin account by sending a role of `"admin"` when registering.  Existing admins can also use the form at `/admin/register`, which is publicly accessible (no login required):
 
