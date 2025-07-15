@@ -54,18 +54,19 @@
             }
             document.getElementById('msg').textContent = '';
             const res = await fetch('/admin/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ phone_number: phone })
-            });
-            const data = await res.json();
-            if (res.ok) {
-                localStorage.setItem('access_token', data.access_token);
-                window.location.href = '/static/admin_dashboard.html';
-            } else {
-                document.getElementById('msg').textContent = data.detail || 'Error';
-                document.getElementById('msg').style.color = 'red';
-            }
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ phone_number: phone })
+});
+const data = await res.json();
+if (res.ok && data.access_token) {
+    localStorage.setItem('access_token', data.access_token);
+    window.location.href = '/static/admin_dashboard.html';
+} else {
+    document.getElementById('msg').textContent = data.detail || 'Login failed';
+    document.getElementById('msg').style.color = 'red';
+}
+
         }
     </script>
 </body>

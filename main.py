@@ -12,6 +12,7 @@ from fastapi.responses import (
     FileResponse,
     HTMLResponse,
     RedirectResponse,
+    JSONResponse,
 )
 
 from fastapi.staticfiles import StaticFiles
@@ -1199,3 +1200,6 @@ async def admin_login(
     admin = db.query(Admin).filter(Admin.phone_number == phone_number).first()
     if not admin:
         raise HTTPException(status_code=400, detail="Invalid phone number")
+
+    # Return a dummy access token for now
+    return JSONResponse(content={"access_token": f"admin-token-{admin.id}"})
