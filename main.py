@@ -468,7 +468,7 @@ async def create_product(
     images: List[UploadFile] = File(...),
     db: Session = Depends(get_db),
 ):
-    user = db.query(DBUser).filter(DBUser.phone_number == phone_number).first()
+    shop = db.query(Shop).filter(Shop.phone_number == phone_number).first()
     if not user:
         raise HTTPException(status_code=403, detail="Phone number not authorized")
         
