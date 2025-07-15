@@ -87,6 +87,7 @@
     <input type="file" id="product-image" accept="image/*" multiple>
 
     <button class="primary-button" onclick="addProduct()">Add Product</button>
+<button class="primary-button" onclick="addProduct(event)">Test Product</button>
     <button class="primary-button" onclick="window.location.href='index.html'" style="margin-left:10px;">Back to Home</button>
 
     <!-- Preview table for newly added products -->
@@ -128,6 +129,19 @@
 
 
         }
+
+              function addProduct(event) {
+    const btnText = event.target.innerText;
+    console.log("Button clicked:", btnText);
+
+    if (btnText === "Add Product") {
+      document.getElementById("seller-msg").textContent = "Add Product clicked";
+    } else if (btnText === "Test Product") {
+      document.getElementById("seller-msg").textContent = "Test Product clicked";
+    } else {
+      document.getElementById("seller-msg").textContent = "Unknown button clicked";
+    }
+  }
 
 
         async function addProduct() {
