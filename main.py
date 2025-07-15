@@ -466,9 +466,12 @@ async def create_product(
     delivery_range_km: int = Form(...),
     phone_number: str = Form(...),
     images: List[UploadFile] = File(...),
-    current_user: dict = Depends(get_current_user_from_token),
     db: Session = Depends(get_db),
 ):
+    user = db.query(DBUser).filter(DBUser.phone_number == phone_number).first()
+    if not user:
+        raise HTTPException(status_code=403, detail="Phone number not authorized")
+        
     # ✅ Create directory if it doesn't exist
     os.makedirs("static/uploads", exist_ok=True)
 
@@ -497,11 +500,6 @@ async def create_product(
         delivery_range_km=delivery_range_km,
     )
 
-    log_entry = AddedProduct(
-        user_id=user.id,
-        product_name=name,
-        details=description,
-    )
 
     db.add(new_product)
     db.add(log_entry)
