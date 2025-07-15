@@ -469,7 +469,7 @@ async def create_product(
     db: Session = Depends(get_db),
 ):
     shop = db.query(Shop).filter(Shop.phone_number == phone_number).first()
-    if not user:
+    if not shop:
         raise HTTPException(status_code=403, detail="Phone number not authorized")
         
     # ✅ Create directory if it doesn't exist
