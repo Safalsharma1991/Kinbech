@@ -186,26 +186,32 @@ def authenticate_user(db: Session, username: str, password: str):
     return None
 
 
-def get_current_user_from_token(
-    token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)
-):
+def decode_token(token: str):
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        username: str = payload.get("sub")
-        if not username:
-            raise HTTPException(status_code=401, detail="Invalid credentials")
-
-        user = db.query(DBUser).filter(DBUser.username == username).first()
-        if not user:
-            raise HTTPException(status_code=401, detail="User not found")
-
-        return {
-            "username": user.username,
-            "full_name": user.full_name,
-            "role": user.role.split(","),
-        }
+        return payload
     except JWTError:
         raise HTTPException(status_code=401, detail="Invalid token")
+
+def get_current_admin_from_token(
+    request: Request, db: Session = Depends(get_db)
+) -> Admin:
+    token = request.headers.get("Authorization")
+    if not token or not token.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Missing or invalid token")
+    
+    token = token.replace("Bearer ", "")
+    payload = decode_token(token)  # your existing token decoding logic
+    phone_number = payload.get("phone_number")
+
+    if not phone_number:
+        raise HTTPException(status_code=401, detail="Invalid token payload")
+
+    admin = db.query(Admin).filter(Admin.phone_number == phone_number).first()
+    if not admin:
+        raise HTTPException(status_code=403, detail="Not an admin")
+    
+    return admin
 
 
 def _generate_unique_username(base: str, db: Session) -> str:
@@ -1030,10 +1036,9 @@ def require_admin(current_user: dict):
 
 @app.get("/admin/products/pending")
 def list_pending_products(
-    current_user: dict = Depends(get_current_user_from_token),
+    current_admin: Admin = Depends(get_current_admin_from_token),
     db: Session = Depends(get_db),
 ):
-    require_admin(current_user)
     products = db.query(DBProduct).filter(DBProduct.is_validated == False).all()
     return [
         {
@@ -1043,7 +1048,7 @@ def list_pending_products(
             "price": p.price,
             "seller": p.seller,
             "shop_name": p.shop_name,
-            "image_urls": p.image_url.split(","),
+            "image_urls": p.image_url.split(",") if p.image_url else [],
             "delivery_range_km": p.delivery_range_km,
             "expiry_datetime": p.expiry_datetime,
         }
@@ -1051,34 +1056,37 @@ def list_pending_products(
     ]
 
 
+
 @app.post("/admin/products/{product_id}/validate")
 def validate_product(
     product_id: int,
-    current_user: dict = Depends(get_current_user_from_token),
+    current_admin: Admin = Depends(get_current_admin_from_token),
     db: Session = Depends(get_db),
 ):
-    require_admin(current_user)
     product = db.query(DBProduct).filter(DBProduct.id == product_id).first()
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
+
     product.is_validated = True
     db.commit()
-    return {"msg": "Product validated"}
+    return {"message": "Product validated"}
+
 
 
 @app.delete("/admin/products/{product_id}")
-def admin_delete_product(
+def delete_product(
     product_id: int,
-    current_user: dict = Depends(get_current_user_from_token),
+    current_admin: Admin = Depends(get_current_admin_from_token),
     db: Session = Depends(get_db),
 ):
-    require_admin(current_user)
     product = db.query(DBProduct).filter(DBProduct.id == product_id).first()
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
+
     db.delete(product)
     db.commit()
-    return {"msg": "Product deleted"}
+    return {"message": "Product deleted"}
+
 
 @app.post("/verify-shop")
 def verify_shop(request: PhoneCheckRequest, db: Session = Depends(get_db)):
