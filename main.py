@@ -26,6 +26,7 @@ import os
 import asyncio
 from sqlalchemy.orm import Session
 from models import (
+    Admin,
     Base,
     Order,
     OrderItem,
@@ -1190,20 +1191,11 @@ async def admin_login_page():
     """Serve the admin login page."""
     return FileResponse("static/admin_login.html")
 
-
 @app.post("/admin/login", include_in_schema=False)
 async def admin_login(
     phone_number: str = Body(..., embed=True), db: Session = Depends(get_db)
 ):
     """Login an existing admin using phone number only."""
-    admin = (
-        db.query(DBUser)
-        .filter(DBUser.role.like("%admin%"), DBUser.phone_number == phone_number)
-        .first()
-    )
+    admin = db.query(Admin).filter(Admin.phone_number == phone_number).first()
     if not admin:
         raise HTTPException(status_code=400, detail="Invalid phone number")
-
-    token = create_access_token(data={"sub": admin.username})
-    return {"access_token": token}
-
