@@ -47,9 +47,6 @@ from twilio.rest import Client
 
 app = FastAPI()
 
-# Expose all files in the ./static directory
-app.mount("/static", StaticFiles(directory="static"), name="static")
-
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -670,9 +667,22 @@ async def update_product(
     return {"msg": "Product updated"}
 
 
-# ✅ Just serve the HTML (no auth needed)
+# Serve the seller products page only if the user's phone number exists in the
+# Shop table
 @app.get("/my-products", include_in_schema=False)
-async def my_products_page():
+@app.get("/static/my_products.html", include_in_schema=False)
+async def my_products_page(
+    current_user: dict = Depends(get_current_user_from_token),
+    db: Session = Depends(get_db),
+):
+    user = (
+        db.query(DBUser).filter(DBUser.username == current_user["username"]).first()
+    )
+    if not user or not user.phone_number:
+        raise HTTPException(status_code=403, detail="Unauthorized")
+    shop = db.query(Shop).filter(Shop.phone_number == user.phone_number).first()
+    if not shop:
+        raise HTTPException(status_code=403, detail="Unauthorized")
     return FileResponse("static/my_products.html")
 
 
@@ -1169,6 +1179,11 @@ async def admin_phone_register(
     return {"access_token": token}
 
 
+# Expose all files in the ./static directory after custom routes so that
+# /static/my_products.html can be overridden above.
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
+
 # Admin login by phone number
 @app.get("/admin/login", include_in_schema=False)
 async def admin_login_page():
@@ -1191,3 +1206,4 @@ async def admin_login(
 
     token = create_access_token(data={"sub": admin.username})
     return {"access_token": token}
+
