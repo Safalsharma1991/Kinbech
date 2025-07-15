@@ -142,7 +142,7 @@
             const imageInput = document.getElementById("product-image");
 
 
-            const phone = prompt("Enter your shop phone number to verify:") || "";
+
 
 
             if (!name || isNaN(price) || !imageInput.files.length) {
@@ -150,6 +150,7 @@
                 document.getElementById("seller-msg").textContent = "All fields are required.";
                 return;
             }
+                        const phone = prompt("Enter your shop phone number to verify:") || "";
 
             if (!phone) return;
 
