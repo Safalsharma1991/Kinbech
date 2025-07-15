@@ -151,7 +151,6 @@
                 return;
             }
 
-            const phone = prompt("Enter your shop phone number to verify:") || "";
             if (!phone) return;
 
             try {
@@ -178,7 +177,6 @@
 
             const formData = new FormData();
             formData.append("name", name);
-            formData.append("shop_name", shopName);
             formData.append("description", desc);
             formData.append("price", price);
             formData.append("delivery_range_km", range);
