@@ -494,10 +494,10 @@ async def create_product(
         name=name,
         description=description,
         price=price,
-        seller=current_user["username"],
         image_url=",".join(image_urls),
         is_validated=False,
         delivery_range_km=delivery_range_km,
+        phone_number=phone_number,
     )
 
 
