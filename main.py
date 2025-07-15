@@ -502,7 +502,6 @@ async def create_product(
 
 
     db.add(new_product)
-    db.add(log_entry)
     db.commit()
     db.refresh(new_product)
     return {"msg": "Product added successfully"}
