@@ -464,8 +464,6 @@ async def create_product(
     description: str = Form(""),
     price: float = Form(...),
     delivery_range_km: int = Form(...),
-    expiry_datetime: Optional[str] = Form(None),
-    shop_name: str = Form(...),
     phone_number: str = Form(...),
     images: List[UploadFile] = File(...),
     current_user: dict = Depends(get_current_user_from_token),
@@ -478,9 +476,6 @@ async def create_product(
     if not user or user.phone_number != phone_number:
         raise HTTPException(status_code=400, detail="Phone number does not match registered user")
 
-    if not expiry_datetime:
-        # use a far future timestamp so products don't expire automatically
-        expiry_datetime = "2099-12-31T23:59:59"
 
     image_urls = []
 
@@ -497,11 +492,9 @@ async def create_product(
         description=description,
         price=price,
         seller=current_user["username"],
-        shop_name=shop_name,
         image_url=",".join(image_urls),
         is_validated=False,
         delivery_range_km=delivery_range_km,
-        expiry_datetime=expiry_datetime,
     )
 
     log_entry = AddedProduct(
