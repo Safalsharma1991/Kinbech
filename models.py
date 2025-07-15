@@ -29,12 +29,10 @@ class Product(Base):
     name = Column(String)
     description = Column(String)
     price = Column(Float)
-    seller = Column(String)
-    shop_name = Column(String)
     image_url = Column(String)  # Add this line
     is_validated = Column(Boolean, default=False)
     delivery_range_km = Column(Integer)
-    expiry_datetime = Column(String)
+
 
 
 class Order(Base):
