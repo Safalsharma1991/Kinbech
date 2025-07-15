@@ -32,6 +32,7 @@ class Product(Base):
     image_url = Column(String)  # Add this line
     is_validated = Column(Boolean, default=False)
     delivery_range_km = Column(Integer)
+    phone_number = Column(String, unique=True, nullable=False)
 
 
 
