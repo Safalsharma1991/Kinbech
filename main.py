@@ -19,7 +19,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 import logging
 from pydantic import BaseModel
-from typing import Optional, List
+from typing import Optional, List, Dict
 from passlib.context import CryptContext
 from jose import JWTError, jwt
 from datetime import datetime, timedelta
@@ -157,6 +157,19 @@ class ResetRequest(BaseModel):
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
+def create_access_token(data: Dict, expires_delta: timedelta = timedelta(hours=1)) -> str:
+    to_encode = data.copy()
+    expire = datetime.utcnow() + expires_delta
+    to_encode.update({"exp": expire})
+    
+    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+
+def decode_token(token: str) -> Dict:
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        return payload
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Invalid token")
 
 def get_password_hash(password):
     return pwd_context.hash(password)
@@ -185,14 +198,6 @@ def authenticate_user(db: Session, username: str, password: str):
         return user
     return None
 
-
-def decode_token(token: str):
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        return payload
-    except JWTError:
-        raise HTTPException(status_code=401, detail="Invalid token")
-        
 def get_current_user_from_token(
     token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)
 ):
@@ -213,26 +218,29 @@ def get_current_user_from_token(
         }
     except JWTError:
         raise HTTPException(status_code=401, detail="Invalid token")
-        
+
 def get_current_admin_from_token(
     request: Request, db: Session = Depends(get_db)
 ) -> Admin:
     token = request.headers.get("Authorization")
     if not token or not token.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Missing or invalid token")
-    
+
     token = token.replace("Bearer ", "")
-    payload = decode_token(token)  # your existing token decoding logic
+    payload = decode_token(token)  # This will decode the real JWT token
     phone_number = payload.get("phone_number")
 
     if not phone_number:
         raise HTTPException(status_code=401, detail="Invalid token payload")
-
+    
+    # Query the admin based on the phone number from the token
     admin = db.query(Admin).filter(Admin.phone_number == phone_number).first()
     if not admin:
-        raise HTTPException(status_code=403, detail="Not an admin")
+        raise HTTPException(status_code=404, detail="Admin not found")
     
     return admin
+
+
 
 
 def _generate_unique_username(base: str, db: Session) -> str:
@@ -573,11 +581,8 @@ async def get_public_products(db: Session = Depends(get_db)):
             "name": p.name,
             "description": p.description,
             "price": p.price,
-            "seller": p.seller,
-            "shop_name": p.shop_name,
             "image_urls": p.image_url.split(","),
             "delivery_range_km": p.delivery_range_km,
-            "expiry_datetime": p.expiry_datetime,
         })
     return products
 
@@ -1050,16 +1055,19 @@ async def send_username(payload: ResetRequest, db: Session = Depends(get_db)):
 # --- Admin Product Validation Endpoints ---
 
 
-def require_admin(current_user: dict):
-    if "admin" not in current_user["role"]:
-        raise HTTPException(status_code=403, detail="Admin access required")
+def require_admin(current_user):
+    # Directly access the 'role' attribute of the Admin object
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Admin privileges required")
+
 
 
 @app.get("/admin/products/pending")
 def list_pending_products(
-    current_admin: Admin = Depends(get_current_admin_from_token),
+    current_user: dict = Depends(get_current_admin_from_token),
     db: Session = Depends(get_db),
 ):
+    require_admin(current_user)
     products = db.query(DBProduct).filter(DBProduct.is_validated == False).all()
     return [
         {
@@ -1070,43 +1078,40 @@ def list_pending_products(
             "phone_number": p.phone_number,
             "image_urls": p.image_url.split(",") if p.image_url else [],
             "delivery_range_km": p.delivery_range_km,
-            "expiry_datetime": p.expiry_datetime,
+            
         }
         for p in products
     ]
 
 
-
 @app.post("/admin/products/{product_id}/validate")
 def validate_product(
     product_id: int,
-    current_admin: Admin = Depends(get_current_admin_from_token),
+    current_user: dict = Depends(get_current_admin_from_token),
     db: Session = Depends(get_db),
 ):
+    require_admin(current_user)
     product = db.query(DBProduct).filter(DBProduct.id == product_id).first()
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
-
     product.is_validated = True
     db.commit()
-    return {"message": "Product validated"}
-
+    return {"msg": "Product validated"}
 
 
 @app.delete("/admin/products/{product_id}")
-def delete_product(
+def admin_delete_product(
     product_id: int,
-    current_admin: Admin = Depends(get_current_admin_from_token),
+    current_user: dict = Depends(get_current_admin_from_token),
     db: Session = Depends(get_db),
 ):
+    require_admin(current_user)
     product = db.query(DBProduct).filter(DBProduct.id == product_id).first()
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
-
     db.delete(product)
     db.commit()
-    return {"message": "Product deleted"}
-
+    return {"msg": "Product deleted"}
 
 @app.post("/verify-shop")
 def verify_shop(request: PhoneCheckRequest, db: Session = Depends(get_db)):
@@ -1230,4 +1235,6 @@ async def admin_login(
         raise HTTPException(status_code=400, detail="Invalid phone number")
 
     # Return a dummy access token for now
-    return JSONResponse(content={"access_token": f"admin-token-{admin.id}"})
+    access_token = create_access_token({"phone_number": phone_number})
+    
+    return JSONResponse(content={"access_token": access_token})
