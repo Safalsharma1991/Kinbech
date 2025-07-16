@@ -581,11 +581,8 @@ async def get_public_products(db: Session = Depends(get_db)):
             "name": p.name,
             "description": p.description,
             "price": p.price,
-            "seller": p.seller,
-            "shop_name": p.shop_name,
             "image_urls": p.image_url.split(","),
             "delivery_range_km": p.delivery_range_km,
-            "expiry_datetime": p.expiry_datetime,
         })
     return products
 
