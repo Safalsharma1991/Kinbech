@@ -149,6 +149,7 @@ class CartItem(BaseModel):
 class CheckoutRequest(BaseModel):
     items: List[CartItem]
     address: str
+    phone_number: str  # Add phone_number to the checkout request
 
 
 class ResetRequest(BaseModel):
@@ -624,10 +625,9 @@ async def buy_product(
         },
     }
 
-
 @app.post("/checkout")
 async def checkout(
-    request: CheckoutRequest,
+    request: CheckoutRequest = Body(...), 
     db: Session = Depends(get_db),
 ):
     print("✅ Received checkout:", request.dict())
@@ -636,13 +636,14 @@ async def checkout(
 
     order = Order(
         buyer=request.items[0].product_id,  # Use first product's ID as buyer for simplicity
-        phone_number=request.items[0].quantity,  # Use first item's quantity as phone number for simplicity
+        phone_number=request.phone_number,  # Use phone number from request
         status="Pending",
         timestamp=datetime.utcnow(),
 
         address=request.address,
     )
     db.add(order)
+    db.flush()  # Get order.id
     db.flush()  # Get order.id
 
     for item in request.items:
