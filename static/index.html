@@ -127,15 +127,25 @@
       flex: 1;
     }
 
+    /* layout for product action buttons */
+    .product-actions {
+      display: flex;
+      gap: 5px;
+      justify-content: center;
+      margin-top: 4px;
+    }
+
     /* buttons for product actions */
     .product-btn {
       background-color: #4CAF50;
       color: white;
       border: none;
-      padding: 8px 12px;
+      padding: 6px 10px;
+      font-size: 14px;
       border-radius: 4px;
       cursor: pointer;
-      margin: 5px 2px;
+      margin: 4px 2px;
+      width: auto; /* override global button width */
     }
 
     .product-btn:hover {
@@ -210,9 +220,11 @@
           ${p.description ? `<span>${p.description}</span><br/>` : ""}
           ₹${p.price.toFixed(2)}<br/>
           Delivery Range: ${p.delivery_range_km} km<br/>
-          <button class="product-btn" onclick="buyProduct(${p.id}, '${nameEsc}', ${p.price}, '${imgEsc}')">Buy</button>
-          <button class="product-btn" onclick="addToCart(${p.id}, '${nameEsc}', ${p.price}, '${imgEsc}')">Add to Cart</button>
-          <button class="product-btn" onclick="window.location.href='/static/buyer_orders.html'">My Orders</button>
+          <div class="product-actions">
+            <button class="product-btn" onclick="buyProduct(${p.id}, '${nameEsc}', ${p.price}, '${imgEsc}')">Buy</button>
+            <button class="product-btn" onclick="addToCart(${p.id}, '${nameEsc}', ${p.price}, '${imgEsc}')">Add to Cart</button>
+            <button class="product-btn" onclick="window.location.href='/static/buyer_orders.html'">My Orders</button>
+          </div>
         `;
         list.appendChild(li);
       });
