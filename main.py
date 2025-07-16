@@ -943,12 +943,10 @@ def list_sellers(
 
 @app.get("/admin/sellers/details")
 def list_seller_details(
-    current_user: dict = Depends(get_current_admin_from_token),
+
     db: Session = Depends(get_db),
 ):
-    if "admin" not in current_user["role"]:
-        raise HTTPException(status_code=403, detail="Admins only")
-
+    """Return detailed information about all sellers and their products."""
     sellers = db.query(DBUser).filter(DBUser.role.like("%seller%")).all()
     output = []
     for s in sellers:
@@ -1070,19 +1068,16 @@ async def send_username(payload: ResetRequest, db: Session = Depends(get_db)):
 # --- Admin Product Validation Endpoints ---
 
 
-def require_admin(current_user):
+#def require_admin(current_user):
     # Directly access the 'role' attribute of the Admin object
-    if current_user.role != "admin":
-        raise HTTPException(status_code=403, detail="Admin privileges required")
+ #   if current_user.role != "admin":
+  #      raise HTTPException(status_code=403, detail="Admin privileges required")
 
 
 
 @app.get("/admin/products/pending")
-def list_pending_products(
-    current_user: dict = Depends(get_current_admin_from_token),
-    db: Session = Depends(get_db),
-):
-    require_admin(current_user)
+def list_pending_products(db: Session = Depends(get_db)):
+    """Return all products awaiting validation."""
     products = db.query(DBProduct).filter(DBProduct.is_validated == False).all()
     return [
         {
@@ -1102,10 +1097,10 @@ def list_pending_products(
 @app.post("/admin/products/{product_id}/validate")
 def validate_product(
     product_id: int,
-    current_user: dict = Depends(get_current_admin_from_token),
+    #current_user: dict = Depends(get_current_admin_from_token),
     db: Session = Depends(get_db),
 ):
-    require_admin(current_user)
+    #require_admin(current_user)
     product = db.query(DBProduct).filter(DBProduct.id == product_id).first()
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
@@ -1117,10 +1112,10 @@ def validate_product(
 @app.delete("/admin/products/{product_id}")
 def admin_delete_product(
     product_id: int,
-    current_user: dict = Depends(get_current_admin_from_token),
+    #current_user: dict = Depends(get_current_admin_from_token),
     db: Session = Depends(get_db),
 ):
-    require_admin(current_user)
+    #require_admin(current_user)
     product = db.query(DBProduct).filter(DBProduct.id == product_id).first()
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
@@ -1132,11 +1127,11 @@ def admin_delete_product(
 @app.get("/admin/shop/{phone_number}")
 def admin_get_shop(
     phone_number: str,
-    current_user: dict = Depends(get_current_admin_from_token),
+    #current_user: dict = Depends(get_current_admin_from_token),
     db: Session = Depends(get_db),
 ):
     """Return shop details for the given phone number."""
-    require_admin(current_user)
+    #require_admin(current_user)
     shop = db.query(Shop).filter(Shop.phone_number == phone_number).first()
     if not shop:
         raise HTTPException(status_code=404, detail="Shop not found")
@@ -1153,11 +1148,11 @@ def verify_shop(request: PhoneCheckRequest, db: Session = Depends(get_db)):
 
 @app.get("/admin/orders")
 def get_all_orders(
-    current_user: dict = Depends(get_current_user_from_token),
+    #current_user: dict = Depends(get_current_user_from_token),
     db: Session = Depends(get_db),
 ):
     """Return all orders for admin view."""
-    require_admin(current_user)
+    #require_admin(current_user)
     orders = db.query(Order).all()
     out = []
     for order in orders:
@@ -1289,6 +1284,6 @@ async def admin_login(
 
 # Endpoint to verify admin token validity
 @app.get("/admin/check", include_in_schema=False)
-def admin_check(current_admin: Admin = Depends(get_current_admin_from_token)):
-    """Return OK if provided token belongs to a valid admin."""
+def admin_check():
+    """Endpoint kept for compatibility but no longer performs auth."""
     return {"status": "ok"}
