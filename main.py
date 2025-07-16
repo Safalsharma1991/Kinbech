@@ -954,7 +954,7 @@ def list_sellers(
 
 @app.get("/admin/sellers/details")
 def list_seller_details(
-    current_user: dict = Depends(get_current_user_from_token),
+    current_user: dict = Depends(get_current_admin_from_token),
     db: Session = Depends(get_db),
 ):
     if "admin" not in current_user["role"]:
