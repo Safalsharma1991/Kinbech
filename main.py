@@ -749,6 +749,32 @@ async def get_my_products(
     return out
 
 
+@app.get("/api/products/by-phone/{phone_number}")
+def get_products_by_phone(
+    phone_number: str,
+    db: Session = Depends(get_db),
+):
+    """Return all products for a shop identified by phone number."""
+    products = db.query(DBProduct).filter(DBProduct.phone_number == phone_number).all()
+    out = []
+    for p in products:
+        item = {
+            "id": p.id,
+            "name": p.name,
+            "description": p.description,
+            "price": p.price,
+            "image_urls": p.image_url.split(","),
+            "delivery_range_km": p.delivery_range_km,
+        }
+        # Optional fields if they exist on the model
+        if hasattr(p, "expiry_datetime"):
+            item["expiry_datetime"] = p.expiry_datetime
+        if hasattr(p, "shop_name"):
+            item["shop_name"] = p.shop_name
+        out.append(item)
+    return out
+
+
 @app.get("/seller/orders")
 def get_seller_orders(
     current_user: dict = Depends(get_current_user_from_token),
