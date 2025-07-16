@@ -46,6 +46,20 @@
             cursor: pointer;
         }
 
+        /* layout for per-product action buttons */
+        .product-actions {
+            display: flex;
+            gap: 5px;
+            justify-content: center;
+            margin-top: 4px;
+        }
+
+        .product-btn {
+            padding: 6px 10px;
+            font-size: 14px;
+            margin: 4px 2px;
+        }
+
         button:hover {
             background-color: #45a049;
         }
@@ -177,8 +191,11 @@
 
   <strong>${p.name}</strong> - ₹${p.price.toFixed(2)}<br/>
   ${p.description ? p.description + "<br/>" : ""}
-  <button onclick="buyProduct(${p.id}, '${nameEsc}', ${p.price}, '${imageEsc}')">Buy</button>
-  <button onclick="addToCart(${p.id}, '${nameEsc}', ${p.price}, '${imageEsc}')">Add to Cart</button>
+  <div class="product-actions">
+    <button class="product-btn" onclick="buyProduct(${p.id}, '${nameEsc}', ${p.price}, '${imageEsc}')">Buy</button>
+    <button class="product-btn" onclick="addToCart(${p.id}, '${nameEsc}', ${p.price}, '${imageEsc}')">Add to Cart</button>
+    <button class="product-btn" onclick="window.location.href='/static/buyer_orders.html'">My Orders</button>
+  </div>
 `;
 
                 li.addEventListener('click', (e) => {
