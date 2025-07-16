@@ -705,18 +705,8 @@ async def update_product(
 # Shop table
 @app.get("/my-products", include_in_schema=False)
 @app.get("/static/my_products.html", include_in_schema=False)
-async def my_products_page(
-    current_user: dict = Depends(get_current_user_from_token),
-    db: Session = Depends(get_db),
-):
-    user = (
-        db.query(DBUser).filter(DBUser.username == current_user["username"]).first()
-    )
-    if not user or not user.phone_number:
-        raise HTTPException(status_code=403, detail="Unauthorized")
-    shop = db.query(Shop).filter(Shop.phone_number == user.phone_number).first()
-    if not shop:
-        raise HTTPException(status_code=403, detail="Unauthorized")
+async def my_products_page():
+    """Serve the seller product management page."""
     return FileResponse("static/my_products.html")
 
 
