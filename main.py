@@ -1138,6 +1138,24 @@ def admin_delete_product(
     db.commit()
     return {"msg": "Product deleted"}
 
+
+@app.get("/admin/shop/{phone_number}")
+def admin_get_shop(
+    phone_number: str,
+    current_user: dict = Depends(get_current_admin_from_token),
+    db: Session = Depends(get_db),
+):
+    """Return shop details for the given phone number."""
+    require_admin(current_user)
+    shop = db.query(Shop).filter(Shop.phone_number == phone_number).first()
+    if not shop:
+        raise HTTPException(status_code=404, detail="Shop not found")
+    return {
+        "name": shop.name,
+        "address": shop.address,
+        "phone_number": shop.phone_number,
+    }
+
 @app.post("/verify-shop")
 def verify_shop(request: PhoneCheckRequest, db: Session = Depends(get_db)):
     shop = db.query(Shop).filter(Shop.phone_number == request.phone_number).first()
