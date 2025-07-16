@@ -1192,14 +1192,22 @@ def get_all_orders(
 
 
 @app.get("/admin", include_in_schema=False)
-async def admin_dashboard_page(current_user: Admin = Depends(get_current_admin_from_token)):
-    """Serve the admin dashboard HTML if the requester is an admin."""
+async def admin_dashboard_page():
+    """Serve the admin dashboard page.
+
+    Token validation happens client side via ``/admin/check`` so the HTML
+    itself should be accessible without authentication.
+    """
     return FileResponse("static/admin_dashboard.html")
 
 
 @app.get("/static/admin_dashboard.html", include_in_schema=False)
-async def admin_dashboard_static(current_user: Admin = Depends(get_current_admin_from_token)):
-    """Serve the admin dashboard from the static path with auth."""
+async def admin_dashboard_static():
+    """Serve the admin dashboard from the static path.
+
+    The JavaScript on this page checks the stored token and redirects to the
+    login page when missing or invalid.
+    """
     return FileResponse("static/admin_dashboard.html")
 
 
