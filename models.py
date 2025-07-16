@@ -35,6 +35,14 @@ class Product(Base):
     phone_number = Column(String, unique=True, nullable=False)
 
 
+class Seller(Base):
+    __tablename__ = "sellers"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String)
+    # Add any other fields you need for the seller (like phone_number, email, etc.)
+
+
+
 
 class Order(Base):
     __tablename__ = "orders"
@@ -85,10 +93,11 @@ class Admin(Base):
     __tablename__ = 'admin'
     id = Column(Integer, primary_key=True, index=True)
     phone_number = Column(String, unique=True, nullable=False)
-
+    role = Column(String)
     __table_args__ = (
         UniqueConstraint('phone_number', name='uix_phone_number'),
     )
+
 class AddedProduct(Base):
     """Log of all added products with minimal details."""
 
