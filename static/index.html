@@ -212,7 +212,7 @@
         const firstImage = p.image_urls[0] || "";
         const imgEsc = firstImage.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
         li.innerHTML = `
-          ${p.image_urls.map(url => `<img src="${url}" alt="${p.name}" width="100" height="100">`).join("")}<br/>
+          ${p.image_urls.map(url => `<img src="${url.startsWith('/') ? url : '/' + url}" alt="${p.name}" width="100" height="100">`).join("")}<br/>
           <strong>${p.name}</strong><br/>
           ${p.description ? `<span>${p.description}</span><br/>` : ""}
           ₹${p.price.toFixed(2)}<br/>

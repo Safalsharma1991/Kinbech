@@ -74,7 +74,7 @@
                 item.className = 'seller';
                 const products = (s.products || []).map(p => `
                     <li class="product">
-                        ${p.image_urls.map(url => `<img src="${url}" alt="${p.name}">`).join('')}
+                        ${p.image_urls.map(url => `<img src="${url.startsWith('/') ? url : '/' + url}" alt="${p.name}">`).join('')}
                         <strong>${p.name}</strong> - ₹${p.price} ${p.description || ''}
                         <button onclick="deleteProduct(${p.id})">Delete</button>
                     </li>

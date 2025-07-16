@@ -70,7 +70,7 @@
                 const item = document.createElement('div');
                 item.className = 'product';
                 item.innerHTML = `
-                    ${p.image_urls.map(url => `<img src="${url}" alt="${p.name}">`).join('')}
+                    ${p.image_urls.map(url => `<img src="${url.startsWith('/') ? url : '/' + url}" alt="${p.name}">`).join('')}
                     <strong>${p.name}</strong> by ${p.phone_number}<br>
                     ₹${p.price} — ${p.description}
                     <div>
