@@ -506,8 +506,9 @@ async def create_product(
     if not shop:
         raise HTTPException(status_code=403, detail="Phone number not authorized")
         
-    # ✅ Create directory if it doesn't exist
-    os.makedirs("static/uploads", exist_ok=True)
+    # Create upload dir if it doesn't exist
+    upload_dir = Path("static/uploads")
+    upload_dir.mkdir(parents=True, exist_ok=True)
 
     shop = db.query(Shop).filter(Shop.phone_number == phone_number).first()
     if not shop or shop.phone_number != phone_number:
@@ -519,10 +520,10 @@ async def create_product(
     for image in images:
         ext = Path(image.filename).suffix
         filename = f"{uuid4().hex}{ext}"
-        image_path = Path("static", "uploads", filename)
+        image_path = upload_dir / filename
         with open(image_path, "wb") as buffer:
             buffer.write(await image.read())
-        image_urls.append("/" + image_path.as_posix())  # use forward slashes
+    image_urls.append(f"/static/uploads/{filename}")
 
     new_product = DBProduct(  # ✅ correct model (SQLAlchemy)
         name=name,
