@@ -1185,8 +1185,14 @@ def get_all_orders(
 
 
 @app.get("/admin", include_in_schema=False)
-async def admin_dashboard_page():
-    """Serve the admin dashboard HTML."""
+async def admin_dashboard_page(current_user: Admin = Depends(get_current_admin_from_token)):
+    """Serve the admin dashboard HTML if the requester is an admin."""
+    return FileResponse("static/admin_dashboard.html")
+
+
+@app.get("/static/admin_dashboard.html", include_in_schema=False)
+async def admin_dashboard_static(current_user: Admin = Depends(get_current_admin_from_token)):
+    """Serve the admin dashboard from the static path with auth."""
     return FileResponse("static/admin_dashboard.html")
 
 
