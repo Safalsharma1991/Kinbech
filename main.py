@@ -1262,5 +1262,12 @@ async def admin_login(
 
     # Return a dummy access token for now
     access_token = create_access_token({"phone_number": phone_number})
-    
+
     return JSONResponse(content={"access_token": access_token})
+
+
+# Endpoint to verify admin token validity
+@app.get("/admin/check", include_in_schema=False)
+def admin_check(current_admin: Admin = Depends(get_current_admin_from_token)):
+    """Return OK if provided token belongs to a valid admin."""
+    return {"status": "ok"}

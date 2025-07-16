@@ -98,7 +98,22 @@
             if (res.ok) loadProducts();
             else alert('Failed to delete');
         }
-        loadProducts();
+        if(!token){
+            window.location.href = '/static/index.html';
+        }else{
+            fetch('/admin/check', {headers:{Authorization: 'Bearer ' + token}})
+                .then(res => {
+                    if(res.ok){
+                        loadProducts();
+                    }else{
+                        localStorage.removeItem('access_token');
+                        window.location.href = '/static/index.html';
+                    }
+                })
+                .catch(() => {
+                    window.location.href = '/static/index.html';
+                });
+        }
     </script>
 </body>
 </html>
