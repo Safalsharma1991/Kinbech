@@ -523,7 +523,7 @@ async def create_product(
         image_path = upload_dir / filename
         with open(image_path, "wb") as buffer:
             buffer.write(await image.read())
-    image_urls.append(f"/static/uploads/{filename}")
+        image_urls.append(f"/static/uploads/{filename}")
 
     new_product = DBProduct(  # ✅ correct model (SQLAlchemy)
         name=name,
