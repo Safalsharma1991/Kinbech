@@ -109,3 +109,13 @@ class AddedProduct(Base):
     details = Column(String, nullable=True)
 
     user = relationship("UserModel")
+
+
+class CheckoutItem(BaseModel):
+    product_id: int
+    quantity: int
+
+class CheckoutRequest(BaseModel):
+    address: str
+    phone_number: str
+    items: List[CheckoutItem]

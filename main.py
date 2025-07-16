@@ -628,11 +628,13 @@ async def buy_product(
 @app.post("/checkout")
 async def checkout(
     request: CheckoutRequest,
-    current_user: dict = Depends(get_current_user_from_token),
     db: Session = Depends(get_db),
 ):
+    # Use phone number or a default name as buyer info if needed
+    buyer_name = request.phone_number if hasattr(request, "phone_number") else "Guest"
+
     order = Order(
-        buyer=current_user["username"],
+        buyer=buyer_name,
         address=request.address,
     )
     db.add(order)
@@ -650,12 +652,12 @@ async def checkout(
                 order_id=order.id,
                 product_id=item.product_id,
                 quantity=item.quantity,
-                shop_name=product.shop_name,
             )
         )
 
     db.commit()
     return {"msg": "Order placed successfully!"}
+
 
 
 @app.delete("/products/{product_id}")
