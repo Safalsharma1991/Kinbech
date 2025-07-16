@@ -29,9 +29,7 @@
     <script>
         const token = localStorage.getItem('access_token');
         async function loadOrders() {
-            const res = await fetch('/admin/orders', {
-                headers: { Authorization: 'Bearer ' + token }
-            });
+            const res = await fetch('/admin/orders');
             if (!res.ok) {
                 document.getElementById('order-list').innerHTML = 'Error loading orders.';
                 return;
@@ -69,8 +67,7 @@
         async function completeOrder(orderId) {
             if (!confirm('Complete this order?')) return;
             const res = await fetch(`/orders/${orderId}/complete`, {
-                method: 'POST',
-                headers: { Authorization: 'Bearer ' + token }
+               method: 'POST'
             });
             if (res.ok) {
                 loadOrders();
@@ -82,8 +79,7 @@
         async function fulfillOrder(orderId) {
             if (!confirm('Mark this order fulfilled?')) return;
             const res = await fetch(`/orders/${orderId}/fulfill`, {
-                method: 'POST',
-                headers: { Authorization: 'Bearer ' + token }
+                  method: 'POST'
             });
             if (res.ok) {
                 loadOrders();

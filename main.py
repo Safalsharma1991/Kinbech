@@ -940,39 +940,39 @@ def list_sellers(
         for s in sellers
     ]
 
-
 @app.get("/admin/sellers/details")
-def list_seller_details(
-
-    db: Session = Depends(get_db),
-):
-    """Return detailed information about all sellers and their products."""
-    sellers = db.query(DBUser).filter(DBUser.role.like("%seller%")).all()
+def list_seller_details(db: Session = Depends(get_db)):
+    sellers = db.query(DBUser).all()  # start with all users
     output = []
+
     for s in sellers:
-        products = db.query(DBProduct).filter(DBProduct.seller == s.username).all()
-        output.append(
-            {
-                "username": s.username,
-                "shop_name": s.shop_name,
-                "address": s.address,
-                "phone_number": s.phone_number,
-                "products": [
-                    {
-                        "id": p.id,
-                        "name": p.name,
-                        "description": p.description,
-                        "price": p.price,
-                        "delivery_range_km": p.delivery_range_km,
-                        "expiry_datetime": p.expiry_datetime,
-                        "image_urls": p.image_url.split(","),
-                        "is_validated": p.is_validated,
-                    }
-                    for p in products
-                ],
-            }
-        )
+        # Check if the user is a seller by checking for a matching shop
+        shop = db.query(Shop).filter(Shop.phone_number == s.phone_number).first()
+        if not shop:
+            continue  # skip non-sellers
+
+        products = db.query(DBProduct).filter(DBProduct.phone_number == s.phone_number).all()
+
+        output.append({
+            "shop_name": shop.name,  # assuming `shop.name` exists
+            "address": shop.address,
+            "phone_number": s.phone_number,
+            "products": [
+                {
+                    "id": p.id,
+                    "name": p.name,
+                    "description": p.description,
+                    "price": p.price,
+                    "delivery_range_km": p.delivery_range_km,
+                    "image_urls": p.image_url.split(","),
+                    "is_validated": p.is_validated,
+                }
+                for p in products
+            ],
+        })
+
     return output
+
 
 
 @app.get("/products/{product_id}", response_model=ProductOut)

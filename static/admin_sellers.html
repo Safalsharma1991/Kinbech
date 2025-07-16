@@ -53,14 +53,12 @@
     <div id="seller-list">Loading...</div>
 
     <script>
-        const token = localStorage.getItem('access_token');
+        //const token = localStorage.getItem('access_token');
         const params = new URLSearchParams(window.location.search);
         const phone = params.get('phone');
 
         async function loadSellers() {
-            const res = await fetch('/admin/sellers/details', {
-                headers: { Authorization: 'Bearer ' + token }
-            });
+            const res = await fetch('/admin/sellers/details');
             if (!res.ok) {
                 document.getElementById('seller-list').innerHTML = 'Error loading sellers.';
                 return;
@@ -96,12 +94,8 @@
 
         async function loadSeller(phone) {
             document.getElementById('page-title').textContent = 'Shop Details';
-            const infoRes = await fetch(`/admin/shop/${encodeURIComponent(phone)}`, {
-                headers: { Authorization: 'Bearer ' + token }
-            });
-            const prodRes = await fetch(`/api/products/by-phone/${encodeURIComponent(phone)}`, {
-                headers: { Authorization: 'Bearer ' + token }
-            });
+             const infoRes = await fetch(`/admin/shop/${encodeURIComponent(phone)}`);
+            const prodRes = await fetch(`/api/products/by-phone/${encodeURIComponent(phone)}`);
             const container = document.getElementById('seller-list');
             container.innerHTML = '';
             if (!infoRes.ok) {
@@ -131,8 +125,7 @@
         async function deleteProduct(id) {
             if (!confirm('Delete this product?')) return;
             const res = await fetch(`/admin/products/${id}`, {
-                method: 'DELETE',
-                headers: { Authorization: 'Bearer ' + token }
+                 method: 'DELETE'
             });
             if (res.ok) {
                 phone ? loadSeller(phone) : loadSellers();
