@@ -725,7 +725,7 @@ async def my_products_page(
 
 @app.get("/api/my-products")
 async def get_my_products(
-    current_user: dict = Depends(get_current_user_from_token),
+    current_user: dict = Depends(get_current_admin_from_token),
     db: Session = Depends(get_db),
 ):
 
@@ -741,7 +741,6 @@ async def get_my_products(
             "price": p.price,
             "image_urls": p.image_url.split(","),
             "delivery_range_km": p.delivery_range_km,
-            "expiry_datetime": p.expiry_datetime,
         }
         if "admin" in current_user["role"]:
             item["shop_name"] = p.shop_name
