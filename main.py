@@ -630,11 +630,16 @@ async def checkout(
     request: CheckoutRequest,
     db: Session = Depends(get_db),
 ):
+    print("✅ Received checkout:", request.dict())
     # Use phone number or a default name as buyer info if needed
-    buyer_name = request.phone_number if hasattr(request, "phone_number") else "Guest"
+    
 
     order = Order(
-        buyer=buyer_name,
+        buyer=request.items[0].product_id,  # Use first product's ID as buyer for simplicity
+        phone_number=request.items[0].quantity,  # Use first item's quantity as phone number for simplicity
+        status="Pending",
+        timestamp=datetime.utcnow(),
+
         address=request.address,
     )
     db.add(order)
@@ -652,6 +657,7 @@ async def checkout(
                 order_id=order.id,
                 product_id=item.product_id,
                 quantity=item.quantity,
+                
             )
         )
 
@@ -978,32 +984,32 @@ def list_seller_details(db: Session = Depends(get_db)):
 
 
 
-@app.get("/products/{product_id}", response_model=ProductOut)
-def get_product(
-    product_id: int,
-    db: Session = Depends(get_db),
-    current_user: dict = Depends(get_current_user_from_token),
-):
-    product = (
-        db.query(DBProduct)
-        .filter(
-            DBProduct.id == product_id,
-            DBProduct.seller == current_user["username"],
-        )
-        .first()
-    )
-    if not product:
-        raise HTTPException(status_code=404, detail="Product not found")
-    return {
-        "id": product.id,
-        "name": product.name,
-        "description": product.description,
-        "price": product.price,
-        "shop_name": product.shop_name,
-        "delivery_range_km": product.delivery_range_km,
-        "expiry_datetime": product.expiry_datetime,
-        "image_urls": product.image_url.split(","),
-    }
+#@app.get("/products/{product_id}", response_model=ProductOut)
+#def get_product(
+ #   product_id: int,
+  #  db: Session = Depends(get_db),
+   # current_user: dict = Depends(get_current_user_from_token),
+#):
+ #   product = (
+  #      db.query(DBProduct)
+   #     .filter(
+    #        DBProduct.id == product_id,
+    #        DBProduct.seller == current_user["username"],
+      #  )
+     #   .first()
+    #)
+    #if not product:
+     #   raise HTTPException(status_code=404, detail="Product not found")
+    #return {
+     #   "id": product.id,
+     #   "name": product.name,
+     #   "description": product.description,
+     #   "price": product.price,
+     #   "shop_name": product.shop_name,
+     #   "delivery_range_km": product.delivery_range_km,
+     #   "expiry_datetime": product.expiry_datetime,
+     #   "image_urls": product.image_url.split(","),
+    #}
 
 
 # Load HTML templates from the same directory as other static files

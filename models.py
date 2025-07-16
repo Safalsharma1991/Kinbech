@@ -49,6 +49,7 @@ class Order(Base):
     id = Column(Integer, primary_key=True)
     buyer = Column(String)
     address = Column(String)
+    phone_number = Column(String) 
     status = Column(String, default="Pending")
     timestamp = Column(DateTime, default=datetime.utcnow)
     items = relationship("OrderItem", back_populates="order")
