@@ -71,7 +71,7 @@
                 item.className = 'product';
                 item.innerHTML = `
                     ${p.image_urls.map(url => `<img src="${url}" alt="${p.name}">`).join('')}
-                    <strong>${p.name}</strong> by ${p.seller}<br>
+                    <strong>${p.name}</strong> by ${p.phone_number}<br>
                     ₹${p.price} — ${p.description}
                     <div>
                         <button onclick="validateProduct(${p.id})">Validate</button>

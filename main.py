@@ -1075,7 +1075,8 @@ def list_pending_products(
             "name": p.name,
             "description": p.description,
             "price": p.price,
-            "image_urls": p.image_url.split(","),
+            "phone_number": p.phone_number,
+            "image_urls": p.image_url.split(",") if p.image_url else [],
             "delivery_range_km": p.delivery_range_km,
             
         }
