@@ -215,6 +215,10 @@ Kinbech/
 ├── requirements.txt  # Required packages
 ```
 
+`static/uploads` is intentionally kept almost empty other than placeholder
+images such as `Kinbechlogo.jpg`. Any pictures uploaded by users are stored in
+this folder at runtime and are not tracked in version control.
+
 ---
 
 ## About the Developer
