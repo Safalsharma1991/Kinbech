@@ -187,7 +187,7 @@
                     .replace(/\\/g, "\\\\")
                     .replace(/'/g, "\\'");
                 li.innerHTML = `
-  ${p.image_urls.map(url => `<img src="${url}" alt="${p.name}" width="150" height="150">`).join("")}<br/>
+  ${p.image_urls.map(url => `<img src="${url.startsWith('/') ? url : '/' + url}" alt="${p.name}" width="150" height="150">`).join("")}<br/>
 
   <strong>${p.name}</strong> - ₹${p.price.toFixed(2)}<br/>
   ${p.description ? p.description + "<br/>" : ""}
