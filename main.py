@@ -192,7 +192,28 @@ def decode_token(token: str):
         return payload
     except JWTError:
         raise HTTPException(status_code=401, detail="Invalid token")
+        
+def get_current_user_from_token(
+    token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)
+):
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        username: str = payload.get("sub")
+        if not username:
+            raise HTTPException(status_code=401, detail="Invalid credentials")
 
+        user = db.query(DBUser).filter(DBUser.username == username).first()
+        if not user:
+            raise HTTPException(status_code=401, detail="User not found")
+
+        return {
+            "username": user.username,
+            "full_name": user.full_name,
+            "role": user.role.split(","),
+        }
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Invalid token")
+        
 def get_current_admin_from_token(
     request: Request, db: Session = Depends(get_db)
 ) -> Admin:
