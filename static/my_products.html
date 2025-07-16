@@ -100,8 +100,9 @@
 
     <script>
         const token = localStorage.getItem("access_token");
+        const phone = localStorage.getItem('user_phone');
 
-        if (!token) {
+        if (!token && !phone) {
             alert("Session expired. Please login again.");
             window.location.href = "/static/index.html";
         }
@@ -195,11 +196,14 @@
         }
 
         function loadProducts() {
-            fetch("/api/my-products", {
-                headers: {
-                    "Authorization": `Bearer ${token}`
-                }
-            })
+            let url = "/api/my-products";
+            const headers = {};
+            if (token) {
+                headers["Authorization"] = `Bearer ${token}`;
+            } else if (phone) {
+                url = `/api/products/by-phone/${encodeURIComponent(phone)}`;
+            }
+            fetch(url, { headers })
                 .then(res => {
                     if (!res.ok) throw new Error("Not authenticated");
                     return res.json();
@@ -217,15 +221,14 @@
                                 ${p.image_urls.map(url => `<img src="${url}" alt="${p.name}">`).join("")}
                                 <strong>${p.name}</strong><br>
                                 ₹${p.price} — ${p.description}<br>
-                                <button onclick="editProduct(${p.id})">Edit</button>
-                                <button class="delete-btn" onclick="deleteProduct(${p.id})">Delete</button>
+                                ${token ? `<button onclick="editProduct(${p.id})">Edit</button><button class="delete-btn" onclick="deleteProduct(${p.id})">Delete</button>` : ''}
                             `;
                             list.appendChild(item);
                         });
                     }
                 })
                 .catch(err => {
-                    alert("Unauthorized. Please log in again.");
+                    alert("Unauthorized. Please log in again or enter your phone number.");
                     window.location.href = "/static/index.html";
                 });
         }
