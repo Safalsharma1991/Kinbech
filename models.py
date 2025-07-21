@@ -1,5 +1,5 @@
 # models.py
-from sqlalchemy import Column, Integer, String, Float, ForeignKey, Boolean, create_engine, UniqueConstraint
+from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, create_engine, UniqueConstraint
 from sqlalchemy.orm import declarative_base, relationship
 from sqlalchemy import DateTime
 from datetime import datetime
@@ -28,7 +28,7 @@ class Product(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String)
     description = Column(String)
-    price = Column(Float)
+    price = Column(String)
     image_url = Column(String)  # Add this line
     is_validated = Column(Boolean, default=False)
     delivery_range_km = Column(Integer)

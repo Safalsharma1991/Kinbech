@@ -148,14 +148,15 @@
                 tbody.innerHTML = "<tr><td colspan='5'>Your cart is empty.</td></tr>";
             } else {
                 cart.forEach((item, index) => {
-                    total += item.price * item.qty;
+                    const priceVal = parseFloat(item.price);
+                    total += priceVal * item.qty;
                     const imgHtml = item.imageUrl ? `<img class="cart-image cart-thumb" data-src="${item.imageUrl}" src="${item.imageUrl}" alt="${item.name}">` : "";
                     tbody.innerHTML += `
                         <tr>
                             <td>${imgHtml}</td>
                             <td>${item.name}</td>
                             <td>${item.qty}</td>
-                            <td>₹${(item.price * item.qty).toFixed(2)}</td>
+                            <td>₹${(priceVal * item.qty).toFixed(2)}</td>
                             <td>
                                 <button onclick="updateQty(${index}, 1)">+</button>
                                 <button onclick="updateQty(${index}, -1)">-</button>

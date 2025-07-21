@@ -6,7 +6,7 @@ class ProductOut(BaseModel):
     id: int
     name: str
     description: str
-    price: float
+    price: str
     delivery_range_km: int
     image_urls: List[str]
 
