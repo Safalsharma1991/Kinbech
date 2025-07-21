@@ -943,6 +943,42 @@ def get_buyer_orders(
     ]
 
 
+@app.get("/api/orders/by-phone/{phone_number}")
+def get_orders_by_phone(phone_number: str, db: Session = Depends(get_db)):
+    """Return orders matching the provided phone number."""
+    orders = (
+        db.query(Order)
+        .filter(Order.phone_number == phone_number)
+        .order_by(Order.timestamp.desc())
+        .all()
+    )
+
+    output = []
+    for o in orders:
+        output.append(
+            {
+                "id": o.id,
+                "address": o.address,
+                "items": [
+                    {
+                        "name": item.product.name if item.product else "[deleted]",
+                        "price": item.product.price if item.product else 0,
+                        "quantity": item.quantity,
+                        "shop_name": item.shop_name or (item.product.shop_name if item.product else None),
+                    }
+                    for item in o.items
+                ],
+                "total": sum(
+                    (item.product.price if item.product else 0) * item.quantity
+                    for item in o.items
+                ),
+                "status": o.status,
+                "timestamp": o.timestamp.isoformat(),
+            }
+        )
+    return output
+
+
 @app.get("/admin/sellers")
 def list_sellers(
     current_user: dict = Depends(get_current_user_from_token),

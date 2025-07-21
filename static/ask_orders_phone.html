@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Orders</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+        input {
+            width: 100%;
+            padding: 8px;
+            margin: 6px 0;
+            box-sizing: border-box;
+        }
+        button {
+            padding: 10px 16px;
+            background-color: #3f51b5;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #303f9f;
+        }
+        .order {
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h2>Enter Phone Number</h2>
+    <input type="text" id="phone" placeholder="Phone Number" />
+    <button type="button" onclick="loadOrders()">Show Orders</button>
+    <p id="msg"></p>
+    <div id="order-list"></div>
+
+    <script>
+        async function loadOrders() {
+            const phone = document.getElementById('phone').value.trim();
+            const msg = document.getElementById('msg');
+            const container = document.getElementById('order-list');
+            msg.textContent = '';
+            container.innerHTML = '';
+            if (!phone) {
+                msg.textContent = 'Please enter phone number';
+                return;
+            }
+            try {
+                const res = await fetch(`/api/orders/by-phone/${encodeURIComponent(phone)}`);
+                if (!res.ok) throw new Error('Request failed');
+                const orders = await res.json();
+                if (orders.length === 0) {
+                    msg.textContent = "You don't have any orders.";
+                    return;
+                }
+                orders.forEach(o => {
+                    const div = document.createElement('div');
+                    div.className = 'order';
+                    div.innerHTML = `
+                        Address: ${o.address}<br>
+                        ${o.items.map(i => `${i.shop_name ? i.shop_name + ': ' : ''}${i.name} x${i.quantity} - ₹${(i.price * i.quantity).toFixed(2)}`).join('<br>')}<br>
+                        <strong>Total: ₹${o.total.toFixed(2)}</strong><br>
+                        Status: ${o.status}<br>
+                        Time: ${new Date(o.timestamp).toLocaleString()}<br>
+                    `;
+                    container.appendChild(div);
+                });
+            } catch (err) {
+                console.error(err);
+                msg.textContent = 'Error fetching orders';
+            }
+        }
+    </script>
+</body>
+</html>
