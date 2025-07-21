@@ -201,6 +201,7 @@
 
   <div class="info-card card" id="product-section">
     <h3 class="about-title">Products</h3>
+    <input type="text" id="product-search" placeholder="Search products..." oninput="filterProducts()">
     <ul id="product-list" style="list-style:none;padding:0;margin:0"></ul>
 
     <!-- Image Viewer Modal -->
@@ -239,12 +240,14 @@
 
 
  <script>
+  let allProducts = [];
     async function loadPublicProducts() {
       try {
         const res = await fetch("/public-products");
         if (!res.ok) throw new Error("Failed to load products");
         const products = await res.json();
-            console.log("Fetched products:", products);
+        console.log("Fetched products:", products);
+        allProducts = products;
         renderProducts(products);
 } catch (err) {
   console.error("Failed to render products:", err);
@@ -299,6 +302,15 @@ function renderProducts(products) {
 
     list.appendChild(li);
   });
+}
+
+function filterProducts() {
+  const query = document.getElementById("product-search").value.toLowerCase();
+  const filtered = allProducts.filter(p =>
+    p.name.toLowerCase().includes(query) ||
+    (p.description && p.description.toLowerCase().includes(query))
+  );
+  renderProducts(filtered);
 }
 
 
