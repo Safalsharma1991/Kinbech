@@ -40,11 +40,11 @@
 <body>
     <h2>Enter Phone Number</h2>
     <input type="text" id="phone" placeholder="Phone Number" />
-    <button onclick="continueToProducts()">Continue</button>
+    <button type="button" onclick="continueToProducts()">Continue</button>
     <p id="msg"></p>
 
     <script>
-        function continueToProducts() {
+        async function continueToProducts() {
             const phone = document.getElementById('phone').value.trim();
             const msg = document.getElementById('msg');
             msg.textContent = '';
@@ -52,8 +52,19 @@
                 msg.textContent = 'Please enter phone number';
                 return;
             }
-            localStorage.setItem('user_phone', phone);
-            window.location.href = '/static/my_products.html';
+            try {
+                const res = await fetch(`/api/products/by-phone/${encodeURIComponent(phone)}`);
+                if(!res.ok) throw new Error('Request failed');
+                const products = await res.json();
+                if(products.length === 0) {
+                    msg.textContent = 'No products found for this phone number';
+                    return;
+                }
+                localStorage.setItem('user_phone', phone);
+                window.location.href = '/static/my_products.html';
+            } catch(err) {
+                msg.textContent = 'Error verifying phone number';
+            }
         }
     </script>
 </body>
