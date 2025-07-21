@@ -680,47 +680,65 @@ async def checkout(
 
 
 @app.delete("/products/{product_id}")
-async def delete_product(
+def delete_product(
     product_id: int,
-    current_user: dict = Depends(get_current_user_from_token),
-    db: Session = Depends(get_db),
+    db: Session = Depends(get_db)
 ):
-    product = (
-        db.query(DBProduct)
-        .filter(
-            DBProduct.id == product_id, DBProduct.seller == current_user["username"]
-        )
-        .first()
-    )
+    product = db.query(DBProduct).filter(DBProduct.id == product_id).first()
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
+
     db.delete(product)
     db.commit()
-    return {"msg": "Product deleted"}
+    return {"message": "Deleted successfully"}
+
+
+class ProductIn(BaseModel):
+    name: str
+    description: Optional[str] = None
+    price: float
+    delivery_range_km: int
 
 
 @app.put("/products/{product_id}")
-async def update_product(
+def update_product(
     product_id: int,
-    data: dict = Body(...),
-    db: Session = Depends(get_db),
-    current_user: dict = Depends(get_current_user_from_token),
+    updated: ProductIn,
+    db: Session = Depends(get_db)
 ):
-    product = (
-        db.query(DBProduct)
-        .filter(
-            DBProduct.id == product_id, DBProduct.seller == current_user["username"]
-        )
-        .first()
-    )
+    product = db.query(DBProduct).filter(DBProduct.id == product_id).first()
+
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
 
-    for key in ["name", "description", "price", "delivery_range_km", "expiry_datetime"]:
-        if key in data:
-            setattr(product, key, data[key])
+    product.name = updated.name
+    product.description = updated.description
+    product.price = updated.price
+    product.delivery_range_km = updated.delivery_range_km
+
     db.commit()
-    return {"msg": "Product updated"}
+    db.refresh(product)
+
+    return {"message": "Product updated successfully"}
+
+
+def update_product(
+    product_id: int,
+    updated: ProductIn,  # your input schema
+    db: Session = Depends(get_db),
+):
+    product = db.query(DBProduct).filter(DBProduct.id == product_id).first()
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+
+    product.name = updated.name
+    product.description = updated.description
+    product.price = updated.price
+    product.delivery_range_km = updated.delivery_range_km
+    db.commit()
+    db.refresh(product)
+    return {"message": "Product updated"}
+
 
 
 # Serve the seller products page only if the user's phone number exists in the
@@ -964,7 +982,7 @@ def get_orders_by_phone(phone_number: str, db: Session = Depends(get_db)):
                         "name": item.product.name if item.product else "[deleted]",
                         "price": item.product.price if item.product else 0,
                         "quantity": item.quantity,
-                        "shop_name": item.shop_name or (item.product.shop_name if item.product else None),
+                        
                     }
                     for item in o.items
                 ],
@@ -1033,33 +1051,23 @@ def list_seller_details(db: Session = Depends(get_db)):
 
 
 
-#@app.get("/products/{product_id}", response_model=ProductOut)
-#def get_product(
- #   product_id: int,
-  #  db: Session = Depends(get_db),
-   # current_user: dict = Depends(get_current_user_from_token),
-#):
- #   product = (
-  #      db.query(DBProduct)
-   #     .filter(
-    #        DBProduct.id == product_id,
-    #        DBProduct.seller == current_user["username"],
-      #  )
-     #   .first()
-    #)
-    #if not product:
-     #   raise HTTPException(status_code=404, detail="Product not found")
-    #return {
-     #   "id": product.id,
-     #   "name": product.name,
-     #   "description": product.description,
-     #   "price": product.price,
-     #   "shop_name": product.shop_name,
-     #   "delivery_range_km": product.delivery_range_km,
-     #   "expiry_datetime": product.expiry_datetime,
-     #   "image_urls": product.image_url.split(","),
-    #}
+@app.get("/products/{product_id}", response_model=ProductOut)
+def get_product_public(product_id: int, db: Session = Depends(get_db)):
+    product = db.query(DBProduct).filter(DBProduct.id == product_id).first()
 
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+
+    return {
+        "id": product.id,
+        "name": product.name,
+        "description": product.description,
+        "price": product.price,
+        
+        "delivery_range_km": product.delivery_range_km,
+        
+        "image_urls": product.image_url.split(","),
+    }
 
 # Load HTML templates from the same directory as other static files
 templates = Jinja2Templates(directory="static")

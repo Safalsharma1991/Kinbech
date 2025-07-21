@@ -61,21 +61,25 @@
                     msg.textContent = "You don't have any orders.";
                     return;
                 }
-                orders.forEach(o => {
-                    const div = document.createElement('div');
-                    div.className = 'order';
-                    div.innerHTML = `
-                        Address: ${o.address}<br>
-                        ${o.items.map(i => `${i.shop_name ? i.shop_name + ': ' : ''}${i.name} x${i.quantity} - ₹${(i.price * i.quantity).toFixed(2)}`).join('<br>')}<br>
-                        <strong>Total: ₹${o.total.toFixed(2)}</strong><br>
-                        Status: ${o.status}<br>
-                        Time: ${new Date(o.timestamp).toLocaleString()}<br>
-                    `;
-                    container.appendChild(div);
-                });
+                orders.forEach(order => {
+    order.items.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'order';
+        div.innerHTML = `
+            <strong>Product Name:</strong> ${item.name}<br>
+            <strong>Description:</strong> ${item.description || 'N/A'}<br>
+            <strong>Price:</strong> ₹${item.price.toFixed(2)}<br>
+            <hr>
+        `;
+        container.appendChild(div);
+    });
+});
+                msg.textContent = `Found ${orders.length} order(s) for phone ${phone}`;
             } catch (err) {
                 console.error(err);
                 msg.textContent = 'Error fetching orders';
+            } finally {
+                document.getElementById('phone').value = ''; // Clear input after fetching
             }
         }
     </script>

@@ -100,7 +100,7 @@
     }
 
     .hidden {
-      display: none;
+      display: none !important;
     }
         .logo {
       width: 120px;
@@ -154,6 +154,35 @@
     .product-btn:hover {
       background-color: #45a049;
     }
+
+    #imageModal {
+  transition: opacity 0.3s ease-in-out;
+  opacity: 1;
+}
+#imageModal.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+    #imageModal img {
+      max-width: 90%;
+      max-height: 80vh;
+      border-radius: 8px;
+    }
+
+    #imageModal button {
+      margin: 10px;
+      padding: 6px 12px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    #imageModal button:hover {
+      background-color: #45a049;
+    }
   </style>
 </head>
 
@@ -173,7 +202,29 @@
   <div class="info-card card" id="product-section">
     <h3 class="about-title">Products</h3>
     <ul id="product-list" style="list-style:none;padding:0;margin:0"></ul>
+
+    <!-- Image Viewer Modal -->
+<div id="imageModal" class="hidden" style="
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0,0,0,0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  z-index: 1000;
+">
+  <button onclick="closeModal()" style="position:absolute; top:10px; right:15px; font-size:20px; color:white; background:none; border:none; cursor:pointer;">✖</button>
+  <img id="modalImage" src="" style="max-width:90%; max-height:80vh; border-radius:8px;" />
+  <div style="margin-top:10px;">
+    <button onclick="prevImage()" class="product-btn">Previous</button>
+    <button onclick="nextImage()" class="product-btn">Next</button>
   </div>
+</div>
+  </div>
+
 
 
 
@@ -193,16 +244,20 @@
         const res = await fetch("/public-products");
         if (!res.ok) throw new Error("Failed to load products");
         const products = await res.json();
+            console.log("Fetched products:", products);
         renderProducts(products);
-      } catch (err) {
-        document.getElementById("product-list").innerHTML = "<li>Error loading products.</li>";
-      }
+} catch (err) {
+  console.error("Failed to render products:", err);
+  document.getElementById("product-list").innerHTML = "<li>Error loading products.</li>";
+}
+
     }
 
 
-  function renderProducts(products) {
+function renderProducts(products) {
   const list = document.getElementById("product-list");
   list.innerHTML = "";
+
   if (products.length === 0) {
     list.innerHTML = "<li>No products available.</li>";
     return;
@@ -211,16 +266,25 @@
   products.forEach(p => {
     const li = document.createElement("li");
 
-    // Convert comma-separated string into array
     const imageUrls = Array.isArray(p.image_urls)
       ? p.image_urls
       : (p.image_url || "").split(",");
+
     const nameEsc = p.name.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
     const firstImage = imageUrls[0] || "";
     const imgEsc = firstImage.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
 
+    // Move this declaration BEFORE using it
+    const encodedImages = encodeURIComponent(JSON.stringify(imageUrls));
+
+    let imageHTML = '';
+    imageUrls.forEach((url, index) => {
+      const safeUrl = url.trim();
+      imageHTML += `<img src="${safeUrl}" alt="${p.name}" width="100" height="100" style="margin: 5px; cursor:pointer;" onclick="openImageViewer('${encodedImages}', ${index})">`;
+    });
+
     li.innerHTML = `
-      ${imageUrls.map(url => `<img src="${url}" alt="${p.name}" width="100" height="100" style="margin: 5px;">`).join("")}
+      ${imageHTML}
       <br/>
       <strong>${p.name}</strong><br/>
       ${p.description ? `<span>${p.description}</span><br/>` : ""}
@@ -229,9 +293,10 @@
       <div class="product-actions">
         <button class="product-btn" onclick="buyProduct(${p.id}, '${nameEsc}', ${p.price}, '${imgEsc}')">Buy</button>
         <button class="product-btn" onclick="addToCart(${p.id}, '${nameEsc}', ${p.price}, '${imgEsc}')">Add to Cart</button>
-        <button class="product-btn" onclick="window.location.href='/static/buyer_orders.html'">My Orders</button>
+        <button class="product-btn" onclick="window.location.href='/static/ask_orders_phone.html'">My Orders</button>
       </div>
     `;
+
     list.appendChild(li);
   });
 }
@@ -260,6 +325,36 @@
     }
 
     window.addEventListener("DOMContentLoaded", loadPublicProducts);
+
+     let currentImages = [];
+  let currentIndex = 0;
+
+  function openImageViewer(imagesJson, index) {
+    try {
+      currentImages = JSON.parse(decodeURIComponent(imagesJson));
+      currentIndex = index;
+      document.getElementById("modalImage").src = currentImages[currentIndex];
+      document.getElementById("imageModal").classList.remove("hidden");
+    } catch (e) {
+      alert("Could not load image viewer");
+    }
+  }
+
+  function closeModal() {
+    document.getElementById("imageModal").classList.add("hidden");
+  }
+
+  function nextImage() {
+    if (currentImages.length === 0) return;
+    currentIndex = (currentIndex + 1) % currentImages.length;
+    document.getElementById("modalImage").src = currentImages[currentIndex];
+  }
+
+  function prevImage() {
+    if (currentImages.length === 0) return;
+    currentIndex = (currentIndex - 1 + currentImages.length) % currentImages.length;
+    document.getElementById("modalImage").src = currentImages[currentIndex];
+  }
   </script>
 
 </body>
