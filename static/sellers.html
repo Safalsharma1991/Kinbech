@@ -134,10 +134,10 @@
         async function addProduct() {
             const name = document.getElementById("product-name").value.trim();
             const desc = document.getElementById("product-desc").value.trim();
-            const price = parseFloat(document.getElementById("product-price").value);
+            const price = document.getElementById("product-price").value.trim();
             const range = parseInt(document.getElementById("product-range").value);
             const imageInput = document.getElementById("product-image");
-            if (!name || isNaN(price) || !imageInput.files.length) {
+            if (!name || !price || !imageInput.files.length) {
                 document.getElementById("seller-msg").style.color = "red";
                 document.getElementById("seller-msg").textContent = "All fields are required.";
                 return;

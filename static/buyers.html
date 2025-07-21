@@ -189,11 +189,11 @@
                 li.innerHTML = `
   ${p.image_urls.map(url => `<img src="${url.startsWith('/') ? url : '/' + url}" alt="${p.name}" width="150" height="150">`).join("")}<br/>
 
-  <strong>${p.name}</strong> - ₹${p.price.toFixed(2)}<br/>
+  <strong>${p.name}</strong> - ₹${p.price}<br/>
   ${p.description ? p.description + "<br/>" : ""}
   <div class="product-actions">
-    <button class="product-btn" onclick="buyProduct(${p.id}, '${nameEsc}', ${p.price}, '${imageEsc}')">Buy</button>
-    <button class="product-btn" onclick="addToCart(${p.id}, '${nameEsc}', ${p.price}, '${imageEsc}')">Add to Cart</button>
+    <button class="product-btn" onclick="buyProduct(${p.id}, '${nameEsc}', '${p.price}', '${imageEsc}')">Buy</button>
+    <button class="product-btn" onclick="addToCart(${p.id}, '${nameEsc}', '${p.price}', '${imageEsc}')">Add to Cart</button>
     <button class="product-btn" onclick="window.location.href='/static/ask_orders_phone.html'">My Orders</button>
   </div>
 `;
@@ -245,7 +245,7 @@
 
                 <h3>${product.name}</h3>
                 <p>${product.description || ""}</p>
-                <p>Price: ₹${product.price.toFixed(2)}</p>
+                <p>Price: ₹${product.price}</p>
             `;
             document.getElementById("product-modal").style.display = "flex";
 

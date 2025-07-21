@@ -68,7 +68,7 @@
         div.innerHTML = `
             <strong>Product Name:</strong> ${item.name}<br>
             <strong>Description:</strong> ${item.description || 'N/A'}<br>
-            <strong>Price:</strong> ₹${item.price.toFixed(2)}<br>
+            <strong>Price:</strong> ₹${parseFloat(item.price).toFixed(2)}<br>
             <hr>
         `;
         container.appendChild(div);

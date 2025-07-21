@@ -53,7 +53,7 @@
                 div.innerHTML = `
                     <strong>Buyer:</strong> ${o.buyer} ${o.phone_number ? '(' + o.phone_number + ')' : ''}<br>
                     Address: ${o.address}<br>
-                    ${o.items.map(i => `${i.shop_name ? i.shop_name + ': ' : ''}${i.name} x${i.quantity} - ₹${(i.price * i.quantity).toFixed(2)}`).join('<br>')}<br>
+                    ${o.items.map(i => `${i.shop_name ? i.shop_name + ': ' : ''}${i.name} x${i.quantity} - ₹${(parseFloat(i.price) * i.quantity).toFixed(2)}`).join('<br>')}<br>
                     <strong>Total: ₹${o.total.toFixed(2)}</strong><br>
                     Status: ${o.status}<br>
                     Time: ${new Date(o.timestamp).toLocaleString()}<br>

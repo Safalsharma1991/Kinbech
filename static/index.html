@@ -288,11 +288,11 @@ function renderProducts(products) {
       <br/>
       <strong>${p.name}</strong><br/>
       ${p.description ? `<span>${p.description}</span><br/>` : ""}
-      ₹${p.price.toFixed(2)}<br/>
+      ₹${p.price}<br/>
       Delivery Range: ${p.delivery_range_km} km<br/>
       <div class="product-actions">
-        <button class="product-btn" onclick="buyProduct(${p.id}, '${nameEsc}', ${p.price}, '${imgEsc}')">Buy</button>
-        <button class="product-btn" onclick="addToCart(${p.id}, '${nameEsc}', ${p.price}, '${imgEsc}')">Add to Cart</button>
+        <button class="product-btn" onclick="buyProduct(${p.id}, '${nameEsc}', '${p.price}', '${imgEsc}')">Buy</button>
+        <button class="product-btn" onclick="addToCart(${p.id}, '${nameEsc}', '${p.price}', '${imgEsc}')">Add to Cart</button>
         <button class="product-btn" onclick="window.location.href='/static/ask_orders_phone.html'">My Orders</button>
       </div>
     `;

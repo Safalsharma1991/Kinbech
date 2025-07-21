@@ -63,7 +63,7 @@
             <h3>Order #${order.id} - Buyer: ${order.buyer}</h3>
             <div class="items">
               ${order.items.map(item => `
-                ${item.shop_name ? item.shop_name + ' - ' : ''}${item.name} x${item.quantity} - ₹${(item.price * item.quantity).toFixed(2)}<br/>
+                ${item.shop_name ? item.shop_name + ' - ' : ''}${item.name} x${item.quantity} - ₹${(parseFloat(item.price) * item.quantity).toFixed(2)}<br/>
               `).join("")}
               Address: ${order.address}<br/>
               <strong>Total: ₹${order.total.toFixed(2)}</strong><br/>

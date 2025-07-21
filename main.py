@@ -143,7 +143,7 @@ class Product(BaseModel):
     id: int
     name: str
     description: Optional[str] = None
-    price: float
+    price: str
     seller: str  # seller username
     delivery_range_km: int
     expiry_datetime: str  # ISO format
@@ -186,6 +186,16 @@ def get_password_hash(password):
 
 def verify_password(plain, hashed):
     return pwd_context.verify(plain, hashed)
+
+
+def price_to_float(price: str) -> float:
+    """Convert a price range like '120-130' to a float (lower bound)."""
+    try:
+        if '-' in price:
+            return float(price.split('-')[0])
+        return float(price)
+    except ValueError:
+        return 0.0
 
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
@@ -505,7 +515,7 @@ def get_shop_phone(
 async def create_product(
     name: str = Form(...),
     description: str = Form(""),
-    price: float = Form(...),
+    price: str = Form(...),
     delivery_range_km: int = Form(...),
     phone_number: str = Form(...),
     images: List[UploadFile] = File(...),
@@ -696,7 +706,7 @@ def delete_product(
 class ProductIn(BaseModel):
     name: str
     description: Optional[str] = None
-    price: float
+    price: str
     delivery_range_km: int
 
 
@@ -833,7 +843,7 @@ def get_seller_orders(
                 }
                 for item in order.items
             ],
-            "total": sum(item.product.price * item.quantity for item in order.items),
+            "total": sum(price_to_float(item.product.price) * item.quantity for item in order.items),
             "timestamp": order.timestamp.isoformat(),
             "status": order.status,
         }
@@ -953,7 +963,7 @@ def get_buyer_orders(
                 }
                 for item in o.items
             ],
-            "total": sum(item.product.price * item.quantity for item in o.items),
+            "total": sum(price_to_float(item.product.price) * item.quantity for item in o.items),
             "status": o.status,
             "timestamp": o.timestamp.isoformat(),
         }
@@ -980,14 +990,14 @@ def get_orders_by_phone(phone_number: str, db: Session = Depends(get_db)):
                 "items": [
                     {
                         "name": item.product.name if item.product else "[deleted]",
-                        "price": item.product.price if item.product else 0,
+                        "price": item.product.price if item.product else "0",
                         "quantity": item.quantity,
                         
                     }
                     for item in o.items
                 ],
                 "total": sum(
-                    (item.product.price if item.product else 0) * item.quantity
+                    price_to_float(item.product.price if item.product else "0") * item.quantity
                     for item in o.items
                 ),
                 "status": o.status,
@@ -1232,14 +1242,14 @@ def get_all_orders(
                 "items": [
                      {
                         "name": item.product.name if item.product else "[deleted]",
-                        "price": item.product.price if item.product else 0,
+                        "price": item.product.price if item.product else "0",
                         "quantity": item.quantity,
                         "shop_name": item.shop_name or (item.product.shop_name if item.product else None),
                      }
                     for item in order.items
                 ],
                 "total": sum(
-                    (item.product.price if item.product else 0) * item.quantity
+                    price_to_float(item.product.price if item.product else "0") * item.quantity
                     for item in order.items
                 ),
                 "timestamp": order.timestamp.isoformat(),
