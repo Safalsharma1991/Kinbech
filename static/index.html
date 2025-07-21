@@ -199,33 +199,39 @@
       }
     }
 
-    function renderProducts(products) {
-      const list = document.getElementById("product-list");
-      list.innerHTML = "";
-      if (products.length === 0) {
-        list.innerHTML = "<li>No products available.</li>";
-        return;
-      }
-      products.forEach(p => {
-        const li = document.createElement("li");
-        const nameEsc = p.name.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
-        const firstImage = p.image_urls[0] || "";
-        const imgEsc = firstImage.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
-        li.innerHTML = `
-          ${p.image_urls.map(url => `<img src="${url.startsWith('/') ? url : '/' + url}" alt="${p.name}" width="100" height="100">`).join("")}<br/>
-          <strong>${p.name}</strong><br/>
-          ${p.description ? `<span>${p.description}</span><br/>` : ""}
-          ₹${p.price.toFixed(2)}<br/>
-          Delivery Range: ${p.delivery_range_km} km<br/>
-          <div class="product-actions">
-            <button class="product-btn" onclick="buyProduct(${p.id}, '${nameEsc}', ${p.price}, '${imgEsc}')">Buy</button>
-            <button class="product-btn" onclick="addToCart(${p.id}, '${nameEsc}', ${p.price}, '${imgEsc}')">Add to Cart</button>
-            <button class="product-btn" onclick="window.location.href='/static/buyer_orders.html'">My Orders</button>
-          </div>
-        `;
-        list.appendChild(li);
-      });
-    }
+  function renderProducts(products) {
+  const list = document.getElementById("product-list");
+  list.innerHTML = "";
+  if (products.length === 0) {
+    list.innerHTML = "<li>No products available.</li>";
+    return;
+  }
+
+  products.forEach(p => {
+    const li = document.createElement("li");
+
+    // Convert comma-separated string into array
+    const imageUrls = p.image_url.split(",");
+    const nameEsc = p.name.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
+    const firstImage = imageUrls[0] || "";
+    const imgEsc = firstImage.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
+
+    li.innerHTML = `
+      ${imageUrls.map(url => `<img src="${url}" alt="${p.name}" width="100" height="100" style="margin: 5px;">`).join("")}
+      <br/>
+      <strong>${p.name}</strong><br/>
+      ${p.description ? `<span>${p.description}</span><br/>` : ""}
+      ₹${p.price.toFixed(2)}<br/>
+      Delivery Range: ${p.delivery_range_km} km<br/>
+      <div class="product-actions">
+        <button class="product-btn" onclick="buyProduct(${p.id}, '${nameEsc}', ${p.price}, '${imgEsc}')">Buy</button>
+        <button class="product-btn" onclick="addToCart(${p.id}, '${nameEsc}', ${p.price}, '${imgEsc}')">Add to Cart</button>
+        <button class="product-btn" onclick="window.location.href='/static/buyer_orders.html'">My Orders</button>
+      </div>
+    `;
+    list.appendChild(li);
+  });
+}
 
     function buyProduct(id, name, price, imageUrl) {
       addToCart(id, name, price, imageUrl);
