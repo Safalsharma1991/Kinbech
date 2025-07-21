@@ -167,7 +167,9 @@
                 });
             }
 
-            document.getElementById("total").textContent = `Total: ₹${total.toFixed(2)}`;
+            const serviceFee = 2; // +2 rs kinbech service
+            const grandTotal = total + serviceFee;
+            document.getElementById("total").textContent = `Total: ₹${grandTotal.toFixed(2)} (+2 rs kinbech service)`;
             // Attach click handlers for zoomable images
             document.querySelectorAll(".cart-thumb").forEach(img => {
                 img.addEventListener("click", () => openCartModal(img.dataset.src));
