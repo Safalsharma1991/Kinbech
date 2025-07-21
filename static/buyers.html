@@ -127,7 +127,7 @@
             Menu
         </button>
         <button onclick="window.location.href='/static/cart.html'">Go to Cart</button>
-        <button onclick="window.location.href='/static/buyer_orders.html'">My Orders</button>
+        <button onclick="window.location.href='/static/ask_orders_phone.html'">My Orders</button>
 
         <button onclick="logout()"
             style="background-color: red; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer;">
@@ -194,7 +194,7 @@
   <div class="product-actions">
     <button class="product-btn" onclick="buyProduct(${p.id}, '${nameEsc}', ${p.price}, '${imageEsc}')">Buy</button>
     <button class="product-btn" onclick="addToCart(${p.id}, '${nameEsc}', ${p.price}, '${imageEsc}')">Add to Cart</button>
-    <button class="product-btn" onclick="window.location.href='/static/buyer_orders.html'">My Orders</button>
+    <button class="product-btn" onclick="window.location.href='/static/ask_orders_phone.html'">My Orders</button>
   </div>
 `;
 
