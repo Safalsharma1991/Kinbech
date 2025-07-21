@@ -46,6 +46,9 @@ from pathlib import Path
 import smtplib
 from email.message import EmailMessage
 from twilio.rest import Client
+import cloudinary
+import cloudinary.uploader
+
 cloudinary.config(
     cloud_name="dt6nx4ud7",
     api_key="787959511856333",
