@@ -211,7 +211,9 @@
     const li = document.createElement("li");
 
     // Convert comma-separated string into array
-    const imageUrls = p.image_url.split(",");
+    const imageUrls = Array.isArray(p.image_urls)
+      ? p.image_urls
+      : (p.image_url || "").split(",");
     const nameEsc = p.name.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
     const firstImage = imageUrls[0] || "";
     const imgEsc = firstImage.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
