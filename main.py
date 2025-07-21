@@ -524,12 +524,16 @@ async def create_product(
     image_urls = []
 
     for image in images:
-        ext = Path(image.filename).suffix
-        filename = f"{uuid4().hex}{ext}"
-        image_path = upload_dir / filename
-        with open(image_path, "wb") as buffer:
-            buffer.write(await image.read())
-        image_urls.append(f"/static/uploads/{filename}")
+        try:
+            result = cloudinary.uploader.upload(
+                await image.read(),
+                folder="kinbech_uploads",  # Optional: Organize images
+                public_id=f"{uuid4().hex}",  # Unique filename
+                resource_type="image"
+            )
+            image_urls.append(result["secure_url"])
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Cloudinary upload failed: {e}")
 
     new_product = DBProduct(  # ✅ correct model (SQLAlchemy)
         name=name,
