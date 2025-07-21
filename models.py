@@ -30,6 +30,7 @@ class Product(Base):
     description = Column(String)
     price = Column(String)
     image_url = Column(String)  # Add this line
+    likes = Column(Integer, default=0)
     is_validated = Column(Boolean, default=False)
     delivery_range_km = Column(Integer)
     phone_number = Column(String, unique=True, nullable=False)
