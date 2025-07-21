@@ -556,6 +556,7 @@ async def create_product(
         is_validated=False,
         delivery_range_km=delivery_range_km,
         phone_number=phone_number,
+        likes=0,
     )
 
 
@@ -586,6 +587,7 @@ async def get_products(
             "image_urls": p.image_url.split(","),
             "delivery_range_km": p.delivery_range_km,
             "expiry_datetime": p.expiry_datetime,
+            "likes": p.likes,
         }
 
         if "admin" in current_user["role"]:
@@ -607,6 +609,7 @@ async def get_public_products(db: Session = Depends(get_db)):
             "price": p.price,
             "image_urls": p.image_url.split(","),
             "delivery_range_km": p.delivery_range_km,
+            "likes": p.likes,
         })
     return products
 
@@ -781,6 +784,7 @@ async def get_my_products(
             "price": p.price,
             "image_urls": p.image_url.split(","),
             "delivery_range_km": p.delivery_range_km,
+            "likes": p.likes,
         }
         if "admin" in current_user["role"]:
             item["shop_name"] = p.shop_name
@@ -804,6 +808,7 @@ def get_products_by_phone(
             "price": p.price,
             "image_urls": p.image_url.split(","),
             "delivery_range_km": p.delivery_range_km,
+            "likes": p.likes,
         }
         # Optional fields if they exist on the model
         if hasattr(p, "expiry_datetime"):
@@ -1073,11 +1078,22 @@ def get_product_public(product_id: int, db: Session = Depends(get_db)):
         "name": product.name,
         "description": product.description,
         "price": product.price,
-        
+
         "delivery_range_km": product.delivery_range_km,
-        
+
         "image_urls": product.image_url.split(","),
+        "likes": product.likes,
     }
+
+
+@app.post("/products/{product_id}/like")
+def like_product(product_id: int, db: Session = Depends(get_db)):
+    product = db.query(DBProduct).filter(DBProduct.id == product_id).first()
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+    product.likes = (product.likes or 0) + 1
+    db.commit()
+    return {"likes": product.likes}
 
 # Load HTML templates from the same directory as other static files
 templates = Jinja2Templates(directory="static")
