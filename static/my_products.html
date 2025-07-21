@@ -218,7 +218,7 @@
                             const item = document.createElement("div");
                             item.className = "product";
                             item.innerHTML = `
-                                ${p.image_urls.map(url => `<img src="${url.startsWith('/') ? url : '/' + url}" alt="${p.name}">`).join("")}
+                               ${(Array.isArray(p.image_urls) ? p.image_urls : (p.image_url || "").split(",")).map(url => `<img src="${url}" alt="${p.name}" style="max-width: 150px; margin: 5px;">`).join("")}
                                 <strong>${p.name}</strong><br>
                                 ₹${p.price} — ${p.description}<br>
                                 ${token ? `<button onclick="editProduct(${p.id})">Edit</button><button class="delete-btn" onclick="deleteProduct(${p.id})">Delete</button>` : ''}
