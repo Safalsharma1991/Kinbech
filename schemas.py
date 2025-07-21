@@ -9,6 +9,5 @@ class ProductOut(BaseModel):
     price: str
     delivery_range_km: int
     image_urls: List[str]
-    likes: int | None = 0
 
     model_config = {"from_attributes": True}

@@ -195,7 +195,6 @@
     <button class="product-btn" onclick="buyProduct(${p.id}, '${nameEsc}', '${p.price}', '${imageEsc}')">Buy</button>
     <button class="product-btn" onclick="addToCart(${p.id}, '${nameEsc}', '${p.price}', '${imageEsc}')">Add to Cart</button>
     <button class="product-btn" onclick="window.location.href='/static/ask_orders_phone.html'">My Orders</button>
-    <button class="product-btn" onclick="likeProduct(${p.id})">Like (<span id="like-count-${p.id}">${p.likes || 0}</span>)</button>
   </div>
 `;
 
@@ -304,18 +303,6 @@
 
             localStorage.setItem("cart", JSON.stringify(cart));
             alert(`${name} added to cart.`);
-        }
-
-        async function likeProduct(id) {
-            try {
-                const res = await fetch(`/products/${id}/like`, { method: "POST" });
-                if (!res.ok) throw new Error();
-                const data = await res.json();
-                const span = document.getElementById(`like-count-${id}`);
-                if (span) span.textContent = data.likes;
-            } catch (e) {
-                alert("Could not like product");
-            }
         }
 
         function viewCart() {
