@@ -46,7 +46,12 @@ from pathlib import Path
 import smtplib
 from email.message import EmailMessage
 from twilio.rest import Client
-
+cloudinary.config(
+    cloud_name="dt6nx4ud7",
+    api_key="787959511856333",
+    api_secret="H9zQpeMBKn_pJ-GeICgAgU3YjIs",
+    secure=True,
+)
 app = FastAPI()
 
 # Configure logging
