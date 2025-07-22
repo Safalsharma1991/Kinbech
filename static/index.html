@@ -283,11 +283,13 @@ function renderProducts(products) {
     // Move this declaration BEFORE using it
     const encodedImages = encodeURIComponent(JSON.stringify(imageUrls));
 
+    // Show only the first image as a preview. Clicking it will open the
+    // modal where users can navigate through all available images.
     let imageHTML = '';
-    imageUrls.forEach((url, index) => {
-      const safeUrl = url.trim();
-      imageHTML += `<img src="${safeUrl}" alt="${p.name}" width="100" height="100" style="margin: 5px; cursor:pointer;" onclick="openImageViewer('${encodedImages}', ${index})">`;
-    });
+    if (imageUrls.length > 0) {
+      const safeUrl = imageUrls[0].trim();
+      imageHTML = `<img src="${safeUrl}" alt="${p.name}" width="100" height="100" style="margin: 5px; cursor:pointer;" onclick="openImageViewer('${encodedImages}', 0)">`;
+    }
 
     li.innerHTML = `
       ${imageHTML}
@@ -301,6 +303,7 @@ function renderProducts(products) {
         <button class="product-btn" onclick="addToCart(${p.id}, '${nameEsc}', '${p.price}', '${imgEsc}')">Add to Cart</button>
         <button class="product-btn" onclick="window.location.href='/static/ask_orders_phone.html'">My Orders</button>
         <button class="product-btn like-btn" onclick="likeProduct(${p.id}, this)"><span class="heart">♡</span> <span class="count">${p.likes}</span></button>
+
       </div>
     `;
 
@@ -348,6 +351,7 @@ function filterProducts() {
             heart.textContent = "\u2665"; // filled heart
             btn.classList.add("liked");
           }
+
         }
       } catch (e) {
         console.error("Failed to like", e);

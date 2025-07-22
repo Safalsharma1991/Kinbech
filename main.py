@@ -115,6 +115,9 @@ APP_BASE_URL = os.getenv("APP_BASE_URL", "http://127.0.0.1:8000")
 # Domain suffix for usernames
 USERNAME_DOMAIN = "kinbech.shop"
 
+# Flat service fee added to each order total
+SERVICE_FEE = 2.0
+
 # Password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -192,10 +195,11 @@ def verify_password(plain, hashed):
 def price_to_float(price: str) -> float:
     """Convert a price range like '120-130' to a float (lower bound)."""
     try:
-        if '-' in price:
-            return float(price.split('-')[0])
-        return float(price)
-    except ValueError:
+        price_str = str(price)  
+        if '-' in price_str:
+            return float(price_str.split('-')[0])
+        return float(price_str)
+    except (ValueError, TypeError):
         return 0.0
 
 
@@ -860,7 +864,8 @@ def get_seller_orders(
                 }
                 for item in order.items
             ],
-            "total": sum(price_to_float(item.product.price) * item.quantity for item in order.items),
+            "total": sum(price_to_float(item.product.price) * item.quantity for item in order.items)
+            + SERVICE_FEE,
             "timestamp": order.timestamp.isoformat(),
             "status": order.status,
         }
@@ -976,11 +981,13 @@ def get_buyer_orders(
                     "name": item.product.name,
                     "price": item.product.price,
                     "quantity": item.quantity,
-                    "shop_name": item.shop_name or (item.product.shop_name if item.product else None),
+                    "shop_name": item.shop_name or None,
+
                 }
                 for item in o.items
             ],
-            "total": sum(price_to_float(item.product.price) * item.quantity for item in o.items),
+            "total": sum(price_to_float(item.product.price) * item.quantity for item in o.items)
+            + SERVICE_FEE,
             "status": o.status,
             "timestamp": o.timestamp.isoformat(),
         }
@@ -1014,9 +1021,11 @@ def get_orders_by_phone(phone_number: str, db: Session = Depends(get_db)):
                     for item in o.items
                 ],
                 "total": sum(
-                    price_to_float(item.product.price if item.product else "0") * item.quantity
+                    price_to_float(item.product.price if item.product else "0")
+                    * item.quantity
                     for item in o.items
-                ),
+                )
+                + SERVICE_FEE,
                 "status": o.status,
                 "timestamp": o.timestamp.isoformat(),
             }
@@ -1266,9 +1275,11 @@ def get_all_orders(
                     for item in order.items
                 ],
                 "total": sum(
-                    price_to_float(item.product.price if item.product else "0") * item.quantity
+                    price_to_float(item.product.price if item.product else "0")
+                    * item.quantity
                     for item in order.items
-                ),
+                )
+                + SERVICE_FEE,
                 "timestamp": order.timestamp.isoformat(),
                 "status": order.status,
             }

@@ -62,18 +62,21 @@
                     return;
                 }
                 orders.forEach(order => {
-    order.items.forEach(item => {
-        const div = document.createElement('div');
-        div.className = 'order';
-        div.innerHTML = `
-            <strong>Product Name:</strong> ${item.name}<br>
-            <strong>Description:</strong> ${item.description || 'N/A'}<br>
-            <strong>Price:</strong> ₹${parseFloat(item.price).toFixed(2)}<br>
-            <hr>
-        `;
-        container.appendChild(div);
-    });
-});
+                    const div = document.createElement('div');
+                    div.className = 'order';
+                    div.innerHTML = `
+                        ${order.items.map(i => `
+                            <strong>Product Name:</strong> ${i.name}<br>
+                            <strong>Description:</strong> ${i.description || 'N/A'}<br>
+                            <strong>Price:</strong> ₹${parseFloat(i.price).toFixed(2)}<br>
+                        `).join('')}<br>
+                        <strong>Total: ₹${order.total.toFixed(2)} (+2 rs kinbech service)</strong><br>
+                        Status: ${order.status}<br>
+                        Time: ${new Date(order.timestamp).toLocaleString()}<br>
+                        <hr>
+                    `;
+                    container.appendChild(div);
+                });
                 msg.textContent = `Found ${orders.length} order(s) for phone ${phone}`;
             } catch (err) {
                 console.error(err);

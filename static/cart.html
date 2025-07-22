@@ -227,6 +227,7 @@ async function placeOrder() {
         };
         console.log("📦 Final Payload JSON:", JSON.stringify(payload, null, 2));
 
+        const orderedItems = cart.slice();
         const res = await fetch("/checkout", {
             method: "POST",
             headers: {
@@ -259,7 +260,18 @@ if (!res.ok) throw new Error(data.detail || "Order failed");
         document.getElementById("phone-number").value = "";
         document.getElementById("secondary-phone").value = "";
         document.getElementById("message").style.color = "green";
-        document.getElementById("message").textContent = data.msg || "Order placed successfully!";
+        const details = orderedItems
+            .map(i => `Product Name: ${i.name} Description: ${i.description || 'N/A'} Price: ₹${parseFloat(i.price).toFixed(2)}`)
+            .join('\n');
+
+        const baseTotal = orderedItems.reduce((sum, i) => sum + parseFloat(i.price) * (i.qty || 1), 0);
+        const totalWithFee = baseTotal + 2;
+        document.getElementById("message").textContent =
+            (data.msg || "Order placed successfully!") +
+            "\n" +
+            details +
+            `\nTotal: ₹${totalWithFee.toFixed(2)} (+2 rs kinbech service)`;
+
         renderCart();
     } catch (err) {
         document.getElementById("message").style.color = "red";
