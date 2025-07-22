@@ -43,6 +43,7 @@ from schemas import ProductOut
 from fastapi.templating import Jinja2Templates
 import uuid
 from uuid import uuid4
+import json
 from pathlib import Path
 import smtplib
 from email.message import EmailMessage
@@ -159,9 +160,11 @@ class CartItem(BaseModel):
 
 
 class CheckoutRequest(BaseModel):
-    items: List[CartItem]
     address: str
     phone_number: str  # Add phone_number to the checkout request
+    special_instructions: str | None = None
+    sample_image_url: str | None = None
+    items: List[CartItem]
 
 
 class ResetRequest(BaseModel):
@@ -670,27 +673,45 @@ async def buy_product(
 
 @app.post("/checkout")
 async def checkout(
-    request: CheckoutRequest = Body(...), 
+    items: str = Form(...),
+    address: str = Form(...),
+    phone_number: str = Form(...),
+    special_instructions: str | None = Form(None),
+    sample_image: UploadFile | None = File(None),
     db: Session = Depends(get_db),
 ):
-    print("✅ Received checkout:", request.dict())
-    # Use phone number or a default name as buyer info if needed
-    
+    try:
+        items_data = json.loads(items)
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=400, detail="Invalid items data")
+
+    sample_url = None
+    if sample_image is not None:
+        try:
+            result = cloudinary.uploader.upload(
+                await sample_image.read(),
+                folder="kinbech_uploads",
+                public_id=f"{uuid4().hex}",
+                resource_type="image",
+            )
+            sample_url = result["secure_url"]
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Image upload failed: {e}")
 
     order = Order(
-        buyer=request.items[0].product_id,  # Use first product's ID as buyer for simplicity
-        phone_number=request.phone_number,  # Use phone number from request
+        buyer=items_data[0]["product_id"],
+        phone_number=phone_number,
         status="Pending",
         timestamp=datetime.utcnow(),
-
-        address=request.address,
+        address=address,
+        special_instructions=special_instructions,
+        sample_image_url=sample_url,
     )
     db.add(order)
-    db.flush()  # Get order.id
-    db.flush()  # Get order.id
+    db.flush()
 
-    for item in request.items:
-        product = db.query(DBProduct).filter(DBProduct.id == item.product_id).first()
+    for item in items_data:
+        product = db.query(DBProduct).filter(DBProduct.id == item["product_id"]).first()
         if not product:
             raise HTTPException(status_code=404, detail="Product not found")
         if not product.is_validated:
@@ -699,9 +720,9 @@ async def checkout(
         db.add(
             OrderItem(
                 order_id=order.id,
-                product_id=item.product_id,
-                quantity=item.quantity,
-                
+                product_id=item["product_id"],
+                quantity=item.get("quantity", 1),
+
             )
         )
 
