@@ -114,6 +114,9 @@ APP_BASE_URL = os.getenv("APP_BASE_URL", "http://127.0.0.1:8000")
 # Domain suffix for usernames
 USERNAME_DOMAIN = "kinbech.shop"
 
+# Flat service fee added to each order total
+SERVICE_FEE = 2.0
+
 # Password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -844,7 +847,8 @@ def get_seller_orders(
                 }
                 for item in order.items
             ],
-            "total": sum(price_to_float(item.product.price) * item.quantity for item in order.items),
+            "total": sum(price_to_float(item.product.price) * item.quantity for item in order.items)
+            + SERVICE_FEE,
             "timestamp": order.timestamp.isoformat(),
             "status": order.status,
         }
@@ -965,7 +969,8 @@ def get_buyer_orders(
                 }
                 for item in o.items
             ],
-            "total": sum(price_to_float(item.product.price) * item.quantity for item in o.items),
+            "total": sum(price_to_float(item.product.price) * item.quantity for item in o.items)
+            + SERVICE_FEE,
             "status": o.status,
             "timestamp": o.timestamp.isoformat(),
         }
@@ -999,9 +1004,11 @@ def get_orders_by_phone(phone_number: str, db: Session = Depends(get_db)):
                     for item in o.items
                 ],
                 "total": sum(
-                    price_to_float(item.product.price if item.product else "0") * item.quantity
+                    price_to_float(item.product.price if item.product else "0")
+                    * item.quantity
                     for item in o.items
-                ),
+                )
+                + SERVICE_FEE,
                 "status": o.status,
                 "timestamp": o.timestamp.isoformat(),
             }
@@ -1251,9 +1258,11 @@ def get_all_orders(
                     for item in order.items
                 ],
                 "total": sum(
-                    price_to_float(item.product.price if item.product else "0") * item.quantity
+                    price_to_float(item.product.price if item.product else "0")
+                    * item.quantity
                     for item in order.items
-                ),
+                )
+                + SERVICE_FEE,
                 "timestamp": order.timestamp.isoformat(),
                 "status": order.status,
             }
