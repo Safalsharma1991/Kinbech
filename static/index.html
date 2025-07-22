@@ -154,6 +154,9 @@
     .product-btn:hover {
       background-color: #45a049;
     }
+    .like-btn { display:flex; align-items:center; gap:2px; }
+    .like-btn .heart { color:white; }
+    .like-btn.liked .heart { color:red; }
 
     #imageModal {
   transition: opacity 0.3s ease-in-out;
@@ -299,7 +302,8 @@ function renderProducts(products) {
         <button class="product-btn" onclick="buyProduct(${p.id}, '${nameEsc}', '${p.price}', '${imgEsc}')">Buy</button>
         <button class="product-btn" onclick="addToCart(${p.id}, '${nameEsc}', '${p.price}', '${imgEsc}')">Add to Cart</button>
         <button class="product-btn" onclick="window.location.href='/static/ask_orders_phone.html'">My Orders</button>
-        <button class="product-btn" onclick="likeProduct(${p.id}, this)">Like (<span>${p.likes}</span>)</button>
+        <button class="product-btn like-btn" onclick="likeProduct(${p.id}, this)"><span class="heart">♡</span> <span class="count">${p.likes}</span></button>
+
       </div>
     `;
 
@@ -340,7 +344,14 @@ function filterProducts() {
         const res = await fetch(`/products/${id}/like`, { method: "POST" });
         if (res.ok) {
           const data = await res.json();
-          btn.querySelector("span").textContent = data.likes;
+          const heart = btn.querySelector(".heart");
+          const count = btn.querySelector(".count");
+          if (heart && count) {
+            count.textContent = data.likes;
+            heart.textContent = "\u2665"; // filled heart
+            btn.classList.add("liked");
+          }
+
         }
       } catch (e) {
         console.error("Failed to like", e);
