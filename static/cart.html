@@ -263,7 +263,15 @@ if (!res.ok) throw new Error(data.detail || "Order failed");
         const details = orderedItems
             .map(i => `Product Name: ${i.name} Description: ${i.description || 'N/A'} Price: ₹${parseFloat(i.price).toFixed(2)}`)
             .join('\n');
-        document.getElementById("message").textContent = (data.msg || "Order placed successfully!") + "\n" + details;
+
+        const baseTotal = orderedItems.reduce((sum, i) => sum + parseFloat(i.price) * (i.qty || 1), 0);
+        const totalWithFee = baseTotal + 2;
+        document.getElementById("message").textContent =
+            (data.msg || "Order placed successfully!") +
+            "\n" +
+            details +
+            `\nTotal: ₹${totalWithFee.toFixed(2)} (+2 rs kinbech service)`;
+
         renderCart();
     } catch (err) {
         document.getElementById("message").style.color = "red";
