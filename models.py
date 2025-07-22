@@ -49,7 +49,9 @@ class Order(Base):
     id = Column(Integer, primary_key=True)
     buyer = Column(String)
     address = Column(String)
-    phone_number = Column(String) 
+    phone_number = Column(String)
+    special_instructions = Column(String, nullable=True)
+    sample_image_url = Column(String, nullable=True)
     status = Column(String, default="Pending")
     timestamp = Column(DateTime, default=datetime.utcnow)
     items = relationship("OrderItem", back_populates="order")
@@ -129,4 +131,6 @@ class CheckoutItem(BaseModel):
 class CheckoutRequest(BaseModel):
     address: str
     phone_number: str
+    special_instructions: str | None = None
+    sample_image_url: str | None = None
     items: List[CheckoutItem]

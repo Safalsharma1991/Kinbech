@@ -95,6 +95,12 @@
             margin-top: 10px;
             box-sizing: border-box;
         }
+        textarea {
+            width: 100%;
+            padding: 8px;
+            margin-top: 10px;
+            box-sizing: border-box;
+        }
 
     </style>
 </head>
@@ -124,6 +130,8 @@
     <input type="text" id="address-line2" placeholder="Address Line 2 (optional)" />
     <input type="text" id="phone-number" placeholder="Phone Number" />
     <input type="text" id="secondary-phone" placeholder="Secondary Phone (optional)" />
+    <textarea id="special-instructions" placeholder="Special instructions (optional)"></textarea>
+    <input type="file" id="sample-image" accept="image/*" />
     <button onclick="placeOrder()">Place Order</button>
     <button onclick="goBack()">Back to Products</button>
 
@@ -196,6 +204,8 @@ async function placeOrder() {
     const phone = document.getElementById("phone-number").value.trim();
     console.log("Phone:", phone); 
     const phone2 = document.getElementById("secondary-phone").value.trim();
+    const instructions = document.getElementById("special-instructions").value.trim();
+    const imageFile = document.getElementById("sample-image").files[0];
 
     if (!line1 || !phone) {
         alert("Please enter address line 1 and phone number.");
@@ -220,21 +230,22 @@ async function placeOrder() {
             quantity: i.qty,
         }));
 
-        const payload = {
-            phone_number: phone, // <-- separate field
-            address,
-            items,
-        };
-        console.log("📦 Final Payload JSON:", JSON.stringify(payload, null, 2));
+        const formData = new FormData();
+        formData.append("phone_number", phone);
+        formData.append("address", address);
+        formData.append("items", JSON.stringify(items));
+        if (instructions) formData.append("special_instructions", instructions);
+        if (imageFile) formData.append("sample_image", imageFile);
+
+        console.log("📦 Final Payload", Array.from(formData.entries()));
 
         const orderedItems = cart.slice();
         const res = await fetch("/checkout", {
             method: "POST",
             headers: {
-                "Content-Type": "application/json",
                 Authorization: "Bearer " + token,
             },
-            body: JSON.stringify(payload),
+            body: formData,
         });
 
 let data;
@@ -259,6 +270,8 @@ if (!res.ok) throw new Error(data.detail || "Order failed");
         document.getElementById("address-line2").value = "";
         document.getElementById("phone-number").value = "";
         document.getElementById("secondary-phone").value = "";
+        document.getElementById("special-instructions").value = "";
+        document.getElementById("sample-image").value = "";
         document.getElementById("message").style.color = "green";
         const details = orderedItems
             .map(i => `Product Name: ${i.name} Description: ${i.description || 'N/A'} Price: ₹${parseFloat(i.price).toFixed(2)}`)
