@@ -66,7 +66,7 @@
                 ${item.shop_name ? item.shop_name + ' - ' : ''}${item.name} x${item.quantity} - ₹${(parseFloat(item.price) * item.quantity).toFixed(2)}<br/>
               `).join("")}
               Address: ${order.address}<br/>
-              <strong>Total: ₹${order.total.toFixed(2)}</strong><br/>
+              <strong>Total: ₹${order.total.toFixed(2)} (+2 rs kinbech service)</strong><br/>
               Status: <span class="${order.status === 'Fulfilled' ? 'fulfilled' : ''}">${order.status}</span><br/>
               ${order.status !== "Fulfilled" ? `<button onclick="markFulfilled(${order.id})">Mark as Fulfilled</button>` : ""}
             </div>
