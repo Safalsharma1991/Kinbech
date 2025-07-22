@@ -191,10 +191,11 @@ def verify_password(plain, hashed):
 def price_to_float(price: str) -> float:
     """Convert a price range like '120-130' to a float (lower bound)."""
     try:
-        if '-' in price:
-            return float(price.split('-')[0])
-        return float(price)
-    except ValueError:
+        price_str = str(price)  
+        if '-' in price_str:
+            return float(price_str.split('-')[0])
+        return float(price_str)
+    except (ValueError, TypeError):
         return 0.0
 
 
@@ -959,7 +960,8 @@ def get_buyer_orders(
                     "name": item.product.name,
                     "price": item.product.price,
                     "quantity": item.quantity,
-                    "shop_name": item.shop_name or (item.product.shop_name if item.product else None),
+                    "shop_name": item.shop_name or None,
+
                 }
                 for item in o.items
             ],
