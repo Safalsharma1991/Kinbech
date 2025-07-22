@@ -123,17 +123,7 @@
             document.getElementById("editModal").style.display = "none";
         }
         function editProduct(id) {
-            const token = localStorage.getItem("access_token");
-            if (!token) {
-                alert("You are not logged in");
-                return;
-            }
-
-            fetch(`/products/${id}`, {
-                headers: {
-                    Authorization: `Bearer ${token}`
-                }
-            })
+            fetch(`/products/${id}`)
                 .then(res => {
                     if (!res.ok) throw new Error("Failed to load product");
                     return res.json();
