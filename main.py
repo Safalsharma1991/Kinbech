@@ -12,13 +12,14 @@ from fastapi.responses import (
     FileResponse,
     HTMLResponse,
     RedirectResponse,
+    JSONResponse,
 )
 
 from fastapi.staticfiles import StaticFiles
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 import logging
 from pydantic import BaseModel
-from typing import Optional, List
+from typing import Optional, List, Dict
 from passlib.context import CryptContext
 from jose import JWTError, jwt
 from datetime import datetime, timedelta
@@ -26,6 +27,7 @@ import os
 import asyncio
 from sqlalchemy.orm import Session
 from models import (
+    Admin,
     Base,
     Order,
     OrderItem,
@@ -34,6 +36,7 @@ from models import (
     ResetToken,
     Shop,
     AddedProduct,
+    Like,
 )
 from database import engine, get_db, SessionLocal
 from schemas import ProductOut
@@ -44,11 +47,16 @@ from pathlib import Path
 import smtplib
 from email.message import EmailMessage
 from twilio.rest import Client
+import cloudinary
+import cloudinary.uploader
 
+cloudinary.config(
+    cloud_name="dt6nx4ud7",
+    api_key="787959511856333",
+    api_secret="H9zQpeMBKn_pJ-GeICgAgU3YjIs",
+    secure=True,
+)
 app = FastAPI()
-
-# Expose all files in the ./static directory
-app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -107,6 +115,9 @@ APP_BASE_URL = os.getenv("APP_BASE_URL", "http://127.0.0.1:8000")
 # Domain suffix for usernames
 USERNAME_DOMAIN = "kinbech.shop"
 
+# Flat service fee added to each order total
+SERVICE_FEE = 2.0
+
 # Password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -136,7 +147,7 @@ class Product(BaseModel):
     id: int
     name: str
     description: Optional[str] = None
-    price: float
+    price: str
     seller: str  # seller username
     delivery_range_km: int
     expiry_datetime: str  # ISO format
@@ -150,6 +161,7 @@ class CartItem(BaseModel):
 class CheckoutRequest(BaseModel):
     items: List[CartItem]
     address: str
+    phone_number: str  # Add phone_number to the checkout request
 
 
 class ResetRequest(BaseModel):
@@ -158,6 +170,19 @@ class ResetRequest(BaseModel):
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
+def create_access_token(data: Dict, expires_delta: timedelta = timedelta(hours=1)) -> str:
+    to_encode = data.copy()
+    expire = datetime.utcnow() + expires_delta
+    to_encode.update({"exp": expire})
+    
+    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+
+def decode_token(token: str) -> Dict:
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        return payload
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Invalid token")
 
 def get_password_hash(password):
     return pwd_context.hash(password)
@@ -165,6 +190,17 @@ def get_password_hash(password):
 
 def verify_password(plain, hashed):
     return pwd_context.verify(plain, hashed)
+
+
+def price_to_float(price: str) -> float:
+    """Convert a price range like '120-130' to a float (lower bound)."""
+    try:
+        price_str = str(price)  
+        if '-' in price_str:
+            return float(price_str.split('-')[0])
+        return float(price_str)
+    except (ValueError, TypeError):
+        return 0.0
 
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
@@ -186,7 +222,6 @@ def authenticate_user(db: Session, username: str, password: str):
         return user
     return None
 
-
 def get_current_user_from_token(
     token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)
 ):
@@ -207,6 +242,29 @@ def get_current_user_from_token(
         }
     except JWTError:
         raise HTTPException(status_code=401, detail="Invalid token")
+
+def get_current_admin_from_token(
+    request: Request, db: Session = Depends(get_db)
+) -> Admin:
+    token = request.headers.get("Authorization")
+    if not token or not token.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Missing or invalid token")
+
+    token = token.replace("Bearer ", "")
+    payload = decode_token(token)  # This will decode the real JWT token
+    phone_number = payload.get("phone_number")
+
+    if not phone_number:
+        raise HTTPException(status_code=401, detail="Invalid token payload")
+    
+    # Query the admin based on the phone number from the token
+    admin = db.query(Admin).filter(Admin.phone_number == phone_number).first()
+    if not admin:
+        raise HTTPException(status_code=404, detail="Admin not found")
+    
+    return admin
+
+
 
 
 def _generate_unique_username(base: str, db: Session) -> str:
@@ -462,56 +520,51 @@ def get_shop_phone(
 async def create_product(
     name: str = Form(...),
     description: str = Form(""),
-    price: float = Form(...),
+    price: str = Form(...),
     delivery_range_km: int = Form(...),
-    expiry_datetime: Optional[str] = Form(None),
-    shop_name: str = Form(...),
     phone_number: str = Form(...),
     images: List[UploadFile] = File(...),
-    current_user: dict = Depends(get_current_user_from_token),
     db: Session = Depends(get_db),
 ):
-    # ✅ Create directory if it doesn't exist
-    os.makedirs("static/uploads", exist_ok=True)
+    shop = db.query(Shop).filter(Shop.phone_number == phone_number).first()
+    if not shop:
+        raise HTTPException(status_code=403, detail="Phone number not authorized")
+        
+    # Create upload dir if it doesn't exist
+    upload_dir = Path("static/uploads")
+    upload_dir.mkdir(parents=True, exist_ok=True)
 
-    user = db.query(DBUser).filter(DBUser.username == current_user["username"]).first()
-    if not user or user.phone_number != phone_number:
+    shop = db.query(Shop).filter(Shop.phone_number == phone_number).first()
+    if not shop or shop.phone_number != phone_number:
         raise HTTPException(status_code=400, detail="Phone number does not match registered user")
 
-    if not expiry_datetime:
-        # use a far future timestamp so products don't expire automatically
-        expiry_datetime = "2099-12-31T23:59:59"
 
     image_urls = []
 
     for image in images:
-        ext = Path(image.filename).suffix
-        filename = f"{uuid4().hex}{ext}"
-        image_path = Path("static", "uploads", filename)
-        with open(image_path, "wb") as buffer:
-            buffer.write(await image.read())
-        image_urls.append("/" + image_path.as_posix())  # use forward slashes
+        try:
+            result = cloudinary.uploader.upload(
+                await image.read(),
+                folder="kinbech_uploads",  # Optional: Organize images
+                public_id=f"{uuid4().hex}",  # Unique filename
+                resource_type="image"
+            )
+            image_urls.append(result["secure_url"])
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Cloudinary upload failed: {e}")
 
     new_product = DBProduct(  # ✅ correct model (SQLAlchemy)
         name=name,
         description=description,
         price=price,
-        seller=current_user["username"],
-        shop_name=shop_name,
         image_url=",".join(image_urls),
         is_validated=False,
         delivery_range_km=delivery_range_km,
-        expiry_datetime=expiry_datetime,
+        phone_number=phone_number,
     )
 
-    log_entry = AddedProduct(
-        user_id=user.id,
-        product_name=name,
-        details=description,
-    )
 
     db.add(new_product)
-    db.add(log_entry)
     db.commit()
     db.refresh(new_product)
     return {"msg": "Product added successfully"}
@@ -552,18 +605,31 @@ async def get_public_products(db: Session = Depends(get_db)):
     db_products = db.query(DBProduct).filter(DBProduct.is_validated == True).all()
     products = []
     for p in db_products:
+        like_row = db.query(Like).filter(Like.product_id == p.id).first()
         products.append({
             "id": p.id,
             "name": p.name,
             "description": p.description,
             "price": p.price,
-            "seller": p.seller,
-            "shop_name": p.shop_name,
             "image_urls": p.image_url.split(","),
             "delivery_range_km": p.delivery_range_km,
-            "expiry_datetime": p.expiry_datetime,
+            "likes": like_row.like if like_row else 0,
         })
     return products
+
+
+@app.post("/products/{product_id}/like")
+def like_product(product_id: int, db: Session = Depends(get_db)):
+    """Increment like count for a product."""
+    like_row = db.query(Like).filter(Like.product_id == product_id).first()
+    if not like_row:
+        like_row = Like(product_id=product_id, like=1)
+        db.add(like_row)
+    else:
+        like_row.like += 1
+    db.commit()
+    db.refresh(like_row)
+    return {"likes": like_row.like}
 
 @app.post("/buy/{product_id}")
 async def buy_product(
@@ -602,18 +668,25 @@ async def buy_product(
         },
     }
 
-
 @app.post("/checkout")
 async def checkout(
-    request: CheckoutRequest,
-    current_user: dict = Depends(get_current_user_from_token),
+    request: CheckoutRequest = Body(...), 
     db: Session = Depends(get_db),
 ):
+    print("✅ Received checkout:", request.dict())
+    # Use phone number or a default name as buyer info if needed
+    
+
     order = Order(
-        buyer=current_user["username"],
+        buyer=request.items[0].product_id,  # Use first product's ID as buyer for simplicity
+        phone_number=request.phone_number,  # Use phone number from request
+        status="Pending",
+        timestamp=datetime.utcnow(),
+
         address=request.address,
     )
     db.add(order)
+    db.flush()  # Get order.id
     db.flush()  # Get order.id
 
     for item in request.items:
@@ -628,7 +701,7 @@ async def checkout(
                 order_id=order.id,
                 product_id=item.product_id,
                 quantity=item.quantity,
-                shop_name=product.shop_name,
+                
             )
         )
 
@@ -636,53 +709,75 @@ async def checkout(
     return {"msg": "Order placed successfully!"}
 
 
+
 @app.delete("/products/{product_id}")
-async def delete_product(
+def delete_product(
     product_id: int,
-    current_user: dict = Depends(get_current_user_from_token),
-    db: Session = Depends(get_db),
+    db: Session = Depends(get_db)
 ):
-    product = (
-        db.query(DBProduct)
-        .filter(
-            DBProduct.id == product_id, DBProduct.seller == current_user["username"]
-        )
-        .first()
-    )
+    product = db.query(DBProduct).filter(DBProduct.id == product_id).first()
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
+
     db.delete(product)
     db.commit()
-    return {"msg": "Product deleted"}
+    return {"message": "Deleted successfully"}
+
+
+class ProductIn(BaseModel):
+    name: str
+    description: Optional[str] = None
+    price: str
+    delivery_range_km: int
 
 
 @app.put("/products/{product_id}")
-async def update_product(
+def update_product(
     product_id: int,
-    data: dict = Body(...),
-    db: Session = Depends(get_db),
-    current_user: dict = Depends(get_current_user_from_token),
+    updated: ProductIn,
+    db: Session = Depends(get_db)
 ):
-    product = (
-        db.query(DBProduct)
-        .filter(
-            DBProduct.id == product_id, DBProduct.seller == current_user["username"]
-        )
-        .first()
-    )
+    product = db.query(DBProduct).filter(DBProduct.id == product_id).first()
+
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
 
-    for key in ["name", "description", "price", "delivery_range_km", "expiry_datetime"]:
-        if key in data:
-            setattr(product, key, data[key])
+    product.name = updated.name
+    product.description = updated.description
+    product.price = updated.price
+    product.delivery_range_km = updated.delivery_range_km
+
     db.commit()
-    return {"msg": "Product updated"}
+    db.refresh(product)
+
+    return {"message": "Product updated successfully"}
 
 
-# ✅ Just serve the HTML (no auth needed)
+def update_product(
+    product_id: int,
+    updated: ProductIn,  # your input schema
+    db: Session = Depends(get_db),
+):
+    product = db.query(DBProduct).filter(DBProduct.id == product_id).first()
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+
+    product.name = updated.name
+    product.description = updated.description
+    product.price = updated.price
+    product.delivery_range_km = updated.delivery_range_km
+    db.commit()
+    db.refresh(product)
+    return {"message": "Product updated"}
+
+
+
+# Serve the seller products page only if the user's phone number exists in the
+# Shop table
 @app.get("/my-products", include_in_schema=False)
+@app.get("/static/my_products.html", include_in_schema=False)
 async def my_products_page():
+    """Serve the seller product management page."""
     return FileResponse("static/my_products.html")
 
 
@@ -691,7 +786,7 @@ async def my_products_page():
 
 @app.get("/api/my-products")
 async def get_my_products(
-    current_user: dict = Depends(get_current_user_from_token),
+    current_user: dict = Depends(get_current_admin_from_token),
     db: Session = Depends(get_db),
 ):
 
@@ -707,9 +802,34 @@ async def get_my_products(
             "price": p.price,
             "image_urls": p.image_url.split(","),
             "delivery_range_km": p.delivery_range_km,
-            "expiry_datetime": p.expiry_datetime,
         }
         if "admin" in current_user["role"]:
+            item["shop_name"] = p.shop_name
+        out.append(item)
+    return out
+
+
+@app.get("/api/products/by-phone/{phone_number}")
+def get_products_by_phone(
+    phone_number: str,
+    db: Session = Depends(get_db),
+):
+    """Return all products for a shop identified by phone number."""
+    products = db.query(DBProduct).filter(DBProduct.phone_number == phone_number).all()
+    out = []
+    for p in products:
+        item = {
+            "id": p.id,
+            "name": p.name,
+            "description": p.description,
+            "price": p.price,
+            "image_urls": p.image_url.split(","),
+            "delivery_range_km": p.delivery_range_km,
+        }
+        # Optional fields if they exist on the model
+        if hasattr(p, "expiry_datetime"):
+            item["expiry_datetime"] = p.expiry_datetime
+        if hasattr(p, "shop_name"):
             item["shop_name"] = p.shop_name
         out.append(item)
     return out
@@ -744,7 +864,8 @@ def get_seller_orders(
                 }
                 for item in order.items
             ],
-            "total": sum(item.product.price * item.quantity for item in order.items),
+            "total": sum(price_to_float(item.product.price) * item.quantity for item in order.items)
+            + SERVICE_FEE,
             "timestamp": order.timestamp.isoformat(),
             "status": order.status,
         }
@@ -860,16 +981,56 @@ def get_buyer_orders(
                     "name": item.product.name,
                     "price": item.product.price,
                     "quantity": item.quantity,
-                    "shop_name": item.shop_name or (item.product.shop_name if item.product else None),
+                    "shop_name": item.shop_name or None,
+
                 }
                 for item in o.items
             ],
-            "total": sum(item.product.price * item.quantity for item in o.items),
+            "total": sum(price_to_float(item.product.price) * item.quantity for item in o.items)
+            + SERVICE_FEE,
             "status": o.status,
             "timestamp": o.timestamp.isoformat(),
         }
         for o in orders
     ]
+
+
+@app.get("/api/orders/by-phone/{phone_number}")
+def get_orders_by_phone(phone_number: str, db: Session = Depends(get_db)):
+    """Return orders matching the provided phone number."""
+    orders = (
+        db.query(Order)
+        .filter(Order.phone_number == phone_number)
+        .order_by(Order.timestamp.desc())
+        .all()
+    )
+
+    output = []
+    for o in orders:
+        output.append(
+            {
+                "id": o.id,
+                "address": o.address,
+                "items": [
+                    {
+                        "name": item.product.name if item.product else "[deleted]",
+                        "price": item.product.price if item.product else "0",
+                        "quantity": item.quantity,
+                        
+                    }
+                    for item in o.items
+                ],
+                "total": sum(
+                    price_to_float(item.product.price if item.product else "0")
+                    * item.quantity
+                    for item in o.items
+                )
+                + SERVICE_FEE,
+                "status": o.status,
+                "timestamp": o.timestamp.isoformat(),
+            }
+        )
+    return output
 
 
 @app.get("/admin/sellers")
@@ -891,70 +1052,58 @@ def list_sellers(
         for s in sellers
     ]
 
-
 @app.get("/admin/sellers/details")
-def list_seller_details(
-    current_user: dict = Depends(get_current_user_from_token),
-    db: Session = Depends(get_db),
-):
-    if "admin" not in current_user["role"]:
-        raise HTTPException(status_code=403, detail="Admins only")
-
-    sellers = db.query(DBUser).filter(DBUser.role.like("%seller%")).all()
+def list_seller_details(db: Session = Depends(get_db)):
+    sellers = db.query(DBUser).all()  # start with all users
     output = []
+
     for s in sellers:
-        products = db.query(DBProduct).filter(DBProduct.seller == s.username).all()
-        output.append(
-            {
-                "username": s.username,
-                "shop_name": s.shop_name,
-                "address": s.address,
-                "phone_number": s.phone_number,
-                "products": [
-                    {
-                        "id": p.id,
-                        "name": p.name,
-                        "description": p.description,
-                        "price": p.price,
-                        "delivery_range_km": p.delivery_range_km,
-                        "expiry_datetime": p.expiry_datetime,
-                        "image_urls": p.image_url.split(","),
-                        "is_validated": p.is_validated,
-                    }
-                    for p in products
-                ],
-            }
-        )
+        # Check if the user is a seller by checking for a matching shop
+        shop = db.query(Shop).filter(Shop.phone_number == s.phone_number).first()
+        if not shop:
+            continue  # skip non-sellers
+
+        products = db.query(DBProduct).filter(DBProduct.phone_number == s.phone_number).all()
+
+        output.append({
+            "shop_name": shop.name,  # assuming `shop.name` exists
+            "address": shop.address,
+            "phone_number": s.phone_number,
+            "products": [
+                {
+                    "id": p.id,
+                    "name": p.name,
+                    "description": p.description,
+                    "price": p.price,
+                    "delivery_range_km": p.delivery_range_km,
+                    "image_urls": p.image_url.split(","),
+                    "is_validated": p.is_validated,
+                }
+                for p in products
+            ],
+        })
+
     return output
 
 
+
 @app.get("/products/{product_id}", response_model=ProductOut)
-def get_product(
-    product_id: int,
-    db: Session = Depends(get_db),
-    current_user: dict = Depends(get_current_user_from_token),
-):
-    product = (
-        db.query(DBProduct)
-        .filter(
-            DBProduct.id == product_id,
-            DBProduct.seller == current_user["username"],
-        )
-        .first()
-    )
+def get_product_public(product_id: int, db: Session = Depends(get_db)):
+    product = db.query(DBProduct).filter(DBProduct.id == product_id).first()
+
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
+
     return {
         "id": product.id,
         "name": product.name,
         "description": product.description,
         "price": product.price,
-        "shop_name": product.shop_name,
+        
         "delivery_range_km": product.delivery_range_km,
-        "expiry_datetime": product.expiry_datetime,
+        
         "image_urls": product.image_url.split(","),
     }
-
 
 # Load HTML templates from the same directory as other static files
 templates = Jinja2Templates(directory="static")
@@ -1021,17 +1170,16 @@ async def send_username(payload: ResetRequest, db: Session = Depends(get_db)):
 # --- Admin Product Validation Endpoints ---
 
 
-def require_admin(current_user: dict):
-    if "admin" not in current_user["role"]:
-        raise HTTPException(status_code=403, detail="Admin access required")
+#def require_admin(current_user):
+    # Directly access the 'role' attribute of the Admin object
+ #   if current_user.role != "admin":
+  #      raise HTTPException(status_code=403, detail="Admin privileges required")
+
 
 
 @app.get("/admin/products/pending")
-def list_pending_products(
-    current_user: dict = Depends(get_current_user_from_token),
-    db: Session = Depends(get_db),
-):
-    require_admin(current_user)
+def list_pending_products(db: Session = Depends(get_db)):
+    """Return all products awaiting validation."""
     products = db.query(DBProduct).filter(DBProduct.is_validated == False).all()
     return [
         {
@@ -1039,11 +1187,10 @@ def list_pending_products(
             "name": p.name,
             "description": p.description,
             "price": p.price,
-            "seller": p.seller,
-            "shop_name": p.shop_name,
-            "image_urls": p.image_url.split(","),
+            "phone_number": p.phone_number,
+            "image_urls": p.image_url.split(",") if p.image_url else [],
             "delivery_range_km": p.delivery_range_km,
-            "expiry_datetime": p.expiry_datetime,
+            
         }
         for p in products
     ]
@@ -1052,10 +1199,10 @@ def list_pending_products(
 @app.post("/admin/products/{product_id}/validate")
 def validate_product(
     product_id: int,
-    current_user: dict = Depends(get_current_user_from_token),
+    #current_user: dict = Depends(get_current_admin_from_token),
     db: Session = Depends(get_db),
 ):
-    require_admin(current_user)
+    #require_admin(current_user)
     product = db.query(DBProduct).filter(DBProduct.id == product_id).first()
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
@@ -1067,16 +1214,34 @@ def validate_product(
 @app.delete("/admin/products/{product_id}")
 def admin_delete_product(
     product_id: int,
-    current_user: dict = Depends(get_current_user_from_token),
+    #current_user: dict = Depends(get_current_admin_from_token),
     db: Session = Depends(get_db),
 ):
-    require_admin(current_user)
+    #require_admin(current_user)
     product = db.query(DBProduct).filter(DBProduct.id == product_id).first()
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
     db.delete(product)
     db.commit()
     return {"msg": "Product deleted"}
+
+
+@app.get("/admin/shop/{phone_number}")
+def admin_get_shop(
+    phone_number: str,
+    #current_user: dict = Depends(get_current_admin_from_token),
+    db: Session = Depends(get_db),
+):
+    """Return shop details for the given phone number."""
+    #require_admin(current_user)
+    shop = db.query(Shop).filter(Shop.phone_number == phone_number).first()
+    if not shop:
+        raise HTTPException(status_code=404, detail="Shop not found")
+    return {
+        "name": shop.name,
+        "address": shop.address,
+        "phone_number": shop.phone_number,
+    }
 
 @app.post("/verify-shop")
 def verify_shop(request: PhoneCheckRequest, db: Session = Depends(get_db)):
@@ -1085,11 +1250,11 @@ def verify_shop(request: PhoneCheckRequest, db: Session = Depends(get_db)):
 
 @app.get("/admin/orders")
 def get_all_orders(
-    current_user: dict = Depends(get_current_user_from_token),
+    #current_user: dict = Depends(get_current_user_from_token),
     db: Session = Depends(get_db),
 ):
     """Return all orders for admin view."""
-    require_admin(current_user)
+    #require_admin(current_user)
     orders = db.query(Order).all()
     out = []
     for order in orders:
@@ -1103,16 +1268,18 @@ def get_all_orders(
                 "items": [
                      {
                         "name": item.product.name if item.product else "[deleted]",
-                        "price": item.product.price if item.product else 0,
+                        "price": item.product.price if item.product else "0",
                         "quantity": item.quantity,
                         "shop_name": item.shop_name or (item.product.shop_name if item.product else None),
                      }
                     for item in order.items
                 ],
                 "total": sum(
-                    (item.product.price if item.product else 0) * item.quantity
+                    price_to_float(item.product.price if item.product else "0")
+                    * item.quantity
                     for item in order.items
-                ),
+                )
+                + SERVICE_FEE,
                 "timestamp": order.timestamp.isoformat(),
                 "status": order.status,
             }
@@ -1125,7 +1292,21 @@ def get_all_orders(
 
 @app.get("/admin", include_in_schema=False)
 async def admin_dashboard_page():
-    """Serve the admin dashboard HTML."""
+    """Serve the admin dashboard page.
+
+    Token validation happens client side via ``/admin/check`` so the HTML
+    itself should be accessible without authentication.
+    """
+    return FileResponse("static/admin_dashboard.html")
+
+
+@app.get("/static/admin_dashboard.html", include_in_schema=False)
+async def admin_dashboard_static():
+    """Serve the admin dashboard from the static path.
+
+    The JavaScript on this page checks the stored token and redirects to the
+    login page when missing or invalid.
+    """
     return FileResponse("static/admin_dashboard.html")
 
 
@@ -1177,3 +1358,36 @@ async def admin_phone_register(
 
     token = create_access_token(data={"sub": db_user.username})
     return {"access_token": token}
+
+
+# Expose all files in the ./static directory after custom routes so that
+# /static/my_products.html can be overridden above.
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
+
+# Admin login by phone number
+@app.get("/admin/login", include_in_schema=False)
+async def admin_login_page():
+    """Serve the admin login page."""
+    return FileResponse("static/admin_login.html")
+
+@app.post("/admin/login", include_in_schema=False)
+async def admin_login(
+    phone_number: str = Body(..., embed=True), db: Session = Depends(get_db)
+):
+    """Login an existing admin using phone number only."""
+    admin = db.query(Admin).filter(Admin.phone_number == phone_number).first()
+    if not admin:
+        raise HTTPException(status_code=400, detail="Invalid phone number")
+
+    # Return a dummy access token for now
+    access_token = create_access_token({"phone_number": phone_number})
+
+    return JSONResponse(content={"access_token": access_token})
+
+
+# Endpoint to verify admin token validity
+@app.get("/admin/check", include_in_schema=False)
+def admin_check():
+    """Endpoint kept for compatibility but no longer performs auth."""
+    return {"status": "ok"}

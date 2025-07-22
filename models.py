@@ -1,5 +1,5 @@
 # models.py
-from sqlalchemy import Column, Integer, String, Float, ForeignKey, Boolean, create_engine, UniqueConstraint
+from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, create_engine, UniqueConstraint
 from sqlalchemy.orm import declarative_base, relationship
 from sqlalchemy import DateTime
 from datetime import datetime
@@ -28,13 +28,20 @@ class Product(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String)
     description = Column(String)
-    price = Column(Float)
-    seller = Column(String)
-    shop_name = Column(String)
+    price = Column(String)
     image_url = Column(String)  # Add this line
     is_validated = Column(Boolean, default=False)
     delivery_range_km = Column(Integer)
-    expiry_datetime = Column(String)
+    phone_number = Column(String, unique=True, nullable=False)
+
+
+class Seller(Base):
+    __tablename__ = "sellers"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String)
+    # Add any other fields you need for the seller (like phone_number, email, etc.)
+
+
 
 
 class Order(Base):
@@ -42,6 +49,7 @@ class Order(Base):
     id = Column(Integer, primary_key=True)
     buyer = Column(String)
     address = Column(String)
+    phone_number = Column(String) 
     status = Column(String, default="Pending")
     timestamp = Column(DateTime, default=datetime.utcnow)
     items = relationship("OrderItem", back_populates="order")
@@ -82,6 +90,14 @@ class Shop(Base):
         UniqueConstraint('phone_number', name='uix_phone_number'),
     )
 
+class Admin(Base):
+    __tablename__ = 'admin'
+    id = Column(Integer, primary_key=True, index=True)
+    phone_number = Column(String, unique=True, nullable=False)
+    role = Column(String)
+    __table_args__ = (
+        UniqueConstraint('phone_number', name='uix_phone_number'),
+    )
 
 class AddedProduct(Base):
     """Log of all added products with minimal details."""
@@ -94,3 +110,23 @@ class AddedProduct(Base):
     details = Column(String, nullable=True)
 
     user = relationship("UserModel")
+
+
+class Like(Base):
+    """Simple like count for each product."""
+
+    __tablename__ = "like"
+
+    id = Column(Integer, primary_key=True, index=True)
+    product_id = Column(Integer, ForeignKey("products.id"))
+    like = Column(Integer, default=0)
+
+
+class CheckoutItem(BaseModel):
+    product_id: int
+    quantity: int
+
+class CheckoutRequest(BaseModel):
+    address: str
+    phone_number: str
+    items: List[CheckoutItem]

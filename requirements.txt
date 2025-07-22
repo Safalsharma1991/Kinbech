@@ -26,3 +26,5 @@ typing_extensions==4.14.0
 uvicorn==0.35.0
 psycopg2-binary==2.9.9
 twilio==9.0.4
+cloudinary
+

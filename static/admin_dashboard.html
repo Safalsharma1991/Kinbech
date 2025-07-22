@@ -70,8 +70,8 @@
                 const item = document.createElement('div');
                 item.className = 'product';
                 item.innerHTML = `
-                    ${p.image_urls.map(url => `<img src="${url}" alt="${p.name}">`).join('')}
-                    <strong>${p.name}</strong> by ${p.seller}<br>
+                    ${p.image_urls.map(url => `<img src="${url.startsWith('/') ? url : '/' + url}" alt="${p.name}">`).join('')}
+                    <strong>${p.name}</strong> by ${p.phone_number}<br>
                     ₹${p.price} — ${p.description}
                     <div>
                         <button onclick="validateProduct(${p.id})">Validate</button>
@@ -98,7 +98,22 @@
             if (res.ok) loadProducts();
             else alert('Failed to delete');
         }
-        loadProducts();
+        if(!token){
+            window.location.href = '/static/index.html';
+        }else{
+            fetch('/admin/check', {headers:{Authorization: 'Bearer ' + token}})
+                .then(res => {
+                    if(res.ok){
+                        loadProducts();
+                    }else{
+                        localStorage.removeItem('access_token');
+                        window.location.href = '/static/index.html';
+                    }
+                })
+                .catch(() => {
+                    window.location.href = '/static/index.html';
+                });
+        }
     </script>
 </body>
 </html>

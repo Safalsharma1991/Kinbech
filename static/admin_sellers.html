@@ -49,15 +49,16 @@
 </head>
 <body>
     <a href="/static/admin_dashboard.html">&larr; Back to Dashboard</a>
-    <h2>Registered Sellers</h2>
+    <h2 id="page-title">Registered Sellers</h2>
     <div id="seller-list">Loading...</div>
 
     <script>
-        const token = localStorage.getItem('access_token');
+        //const token = localStorage.getItem('access_token');
+        const params = new URLSearchParams(window.location.search);
+        const phone = params.get('phone');
+
         async function loadSellers() {
-            const res = await fetch('/admin/sellers/details', {
-                headers: { Authorization: 'Bearer ' + token }
-            });
+            const res = await fetch('/admin/sellers/details');
             if (!res.ok) {
                 document.getElementById('seller-list').innerHTML = 'Error loading sellers.';
                 return;
@@ -74,7 +75,7 @@
                 item.className = 'seller';
                 const products = (s.products || []).map(p => `
                     <li class="product">
-                        ${p.image_urls.map(url => `<img src="${url}" alt="${p.name}">`).join('')}
+                        ${p.image_urls.map(url => `<img src="${url.startsWith('/') ? url : '/' + url}" alt="${p.name}">`).join('')}
                         <strong>${p.name}</strong> - ₹${p.price} ${p.description || ''}
                         <button onclick="deleteProduct(${p.id})">Delete</button>
                     </li>
@@ -90,19 +91,53 @@
                 list.appendChild(item);
             });
         }
+
+        async function loadSeller(phone) {
+            document.getElementById('page-title').textContent = 'Shop Details';
+             const infoRes = await fetch(`/admin/shop/${encodeURIComponent(phone)}`);
+            const prodRes = await fetch(`/api/products/by-phone/${encodeURIComponent(phone)}`);
+            const container = document.getElementById('seller-list');
+            container.innerHTML = '';
+            if (!infoRes.ok) {
+                container.textContent = 'Shop not found.';
+                return;
+            }
+            const info = await infoRes.json();
+            const products = prodRes.ok ? await prodRes.json() : [];
+            const item = document.createElement('div');
+            item.className = 'seller';
+            const productHtml = products.length ? products.map(p => `
+                <li class="product">
+                    ${p.image_urls.map(url => `<img src="${url.startsWith('/') ? url : '/' + url}" alt="${p.name}">`).join('')}
+                    <strong>${p.name}</strong> - ₹${p.price} ${p.description || ''}
+                    <button onclick="deleteProduct(${p.id})">Delete</button>
+                </li>
+            `).join('') : '<li>No products</li>';
+            item.innerHTML = `
+                <strong>${info.name}</strong><br>
+                Address: ${info.address}<br>
+                Phone: ${info.phone_number}<br>
+                <ul>${productHtml}</ul>
+            `;
+            container.appendChild(item);
+        }
+
         async function deleteProduct(id) {
             if (!confirm('Delete this product?')) return;
             const res = await fetch(`/admin/products/${id}`, {
-                method: 'DELETE',
-                headers: { Authorization: 'Bearer ' + token }
+                 method: 'DELETE'
             });
             if (res.ok) {
-                loadSellers();
+                phone ? loadSeller(phone) : loadSellers();
             } else {
                 alert('Failed to delete');
             }
         }
-        loadSellers();
+        if (phone) {
+            loadSeller(phone);
+        } else {
+            loadSellers();
+        }
     </script>
 </body>
 </html>

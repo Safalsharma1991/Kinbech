@@ -148,14 +148,15 @@
                 tbody.innerHTML = "<tr><td colspan='5'>Your cart is empty.</td></tr>";
             } else {
                 cart.forEach((item, index) => {
-                    total += item.price * item.qty;
+                    const priceVal = parseFloat(item.price);
+                    total += priceVal * item.qty;
                     const imgHtml = item.imageUrl ? `<img class="cart-image cart-thumb" data-src="${item.imageUrl}" src="${item.imageUrl}" alt="${item.name}">` : "";
                     tbody.innerHTML += `
                         <tr>
                             <td>${imgHtml}</td>
                             <td>${item.name}</td>
                             <td>${item.qty}</td>
-                            <td>₹${(item.price * item.qty).toFixed(2)}</td>
+                            <td>₹${(priceVal * item.qty).toFixed(2)}</td>
                             <td>
                                 <button onclick="updateQty(${index}, 1)">+</button>
                                 <button onclick="updateQty(${index}, -1)">-</button>
@@ -166,7 +167,9 @@
                 });
             }
 
-            document.getElementById("total").textContent = `Total: ₹${total.toFixed(2)}`;
+            const serviceFee = 2; // +2 rs kinbech service
+            const grandTotal = total + serviceFee;
+            document.getElementById("total").textContent = `Total: ₹${grandTotal.toFixed(2)} (+2 rs kinbech service)`;
             // Attach click handlers for zoomable images
             document.querySelectorAll(".cart-thumb").forEach(img => {
                 img.addEventListener("click", () => openCartModal(img.dataset.src));
@@ -185,68 +188,101 @@
             localStorage.setItem("cart", JSON.stringify(cart));
             renderCart();
         }
+async function placeOrder() {
+    if (cart.length === 0) return alert("Your cart is empty.");
 
-        async function placeOrder() {
-            if (cart.length === 0) return alert("Your cart is empty.");
+    const line1 = document.getElementById("address-line1").value.trim();
+    const line2 = document.getElementById("address-line2").value.trim();
+    const phone = document.getElementById("phone-number").value.trim();
+    console.log("Phone:", phone); 
+    const phone2 = document.getElementById("secondary-phone").value.trim();
 
-            const line1 = document.getElementById("address-line1").value.trim();
-            const line2 = document.getElementById("address-line2").value.trim();
-            const phone = document.getElementById("phone-number").value.trim();
-            const phone2 = document.getElementById("secondary-phone").value.trim();
+    if (!line1 || !phone) {
+        alert("Please enter address line 1 and phone number.");
+        return;
+    }
 
-            if (!line1 || !phone) {
-                alert("Please enter address line 1 and phone number.");
-                return;
-            }
+    let address = line1;
+    if (line2) address += ", " + line2;
+    if (phone2) address += " (Alt: " + phone2 + ")";
 
-            let address = line1;
-            if (line2) address += "\n" + line2;
-            address += `\nPhone: ${phone}`;
-            if (phone2) address += `, ${phone2}`;
+    const token = localStorage.getItem("access_token");
+    cart = JSON.parse(localStorage.getItem("cart") || "[]");
 
-            const token = localStorage.getItem("access_token");
-            cart = JSON.parse(localStorage.getItem("cart") || "[]");
+    if (!cart.length) {
+        document.getElementById("checkout-msg").textContent = "Your cart is empty.";
+        return;
+    }
 
-            if (!cart.length) {
-                document.getElementById("checkout-msg").textContent = "Your cart is empty.";
-                return;
-            }
+    try {
+        const items = cart.map(i => ({
+            product_id: i.id,
+            quantity: i.qty,
+        }));
 
-            try {
-                const items = cart.map(i => ({
-                    product_id: i.id,
-                    quantity: i.qty,
-                }));
+        const payload = {
+            phone_number: phone, // <-- separate field
+            address,
+            items,
+        };
+        console.log("📦 Final Payload JSON:", JSON.stringify(payload, null, 2));
 
-                const res = await fetch("/checkout", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        Authorization: "Bearer " + token,
-                    },
-                    body: JSON.stringify({ address, items }),
-                });
+        const orderedItems = cart.slice();
+        const res = await fetch("/checkout", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: "Bearer " + token,
+            },
+            body: JSON.stringify(payload),
+        });
 
-                const data = await res.json();
-                if (!res.ok) throw new Error(data.detail || "Order failed");
+let data;
+try {
+    const contentType = res.headers.get("content-type") || "";
+    if (contentType.includes("application/json")) {
+        data = await res.json();
+    } else {
+        const text = await res.text();
+        throw new Error(text || "Internal Server Error");
+    }
+} catch (jsonErr) {
+    throw new Error("Invalid response from server");
+}
 
-                localStorage.removeItem("cart");
-                cart = [];
-                document.getElementById("address-line1").value = "";
-                document.getElementById("address-line2").value = "";
-                document.getElementById("phone-number").value = "";
-                document.getElementById("secondary-phone").value = "";
-                document.getElementById("message").style.color = "green";
-                document.getElementById("message").textContent = data.msg || "Order placed successfully!";
-                renderCart();
-            } catch (err) {
-                document.getElementById("message").style.color = "red";
-                document.getElementById("message").textContent = err.message;
-            }
-        }
+if (!res.ok) throw new Error(data.detail || "Order failed");
+
+
+        localStorage.removeItem("cart");
+        cart = [];
+        document.getElementById("address-line1").value = "";
+        document.getElementById("address-line2").value = "";
+        document.getElementById("phone-number").value = "";
+        document.getElementById("secondary-phone").value = "";
+        document.getElementById("message").style.color = "green";
+        const details = orderedItems
+            .map(i => `Product Name: ${i.name} Description: ${i.description || 'N/A'} Price: ₹${parseFloat(i.price).toFixed(2)}`)
+            .join('\n');
+
+        const baseTotal = orderedItems.reduce((sum, i) => sum + parseFloat(i.price) * (i.qty || 1), 0);
+        const totalWithFee = baseTotal + 2;
+        document.getElementById("message").textContent =
+            (data.msg || "Order placed successfully!") +
+            "\n" +
+            details +
+            `\nTotal: ₹${totalWithFee.toFixed(2)} (+2 rs kinbech service)`;
+
+        renderCart();
+    } catch (err) {
+        document.getElementById("message").style.color = "red";
+        document.getElementById("message").textContent = err.message;
+    }
+}
+
 
         function goBack() {
-            window.location.href = "/static/buyers.html";
+            // Navigate to the public product list on the home page
+            window.location.href = "/static/index.html#product-section";
         }
 
         function openCartModal(src) {

@@ -79,10 +79,11 @@
     <input
         type="text"
         id="product-price"
-        placeholder="000-000"
+        placeholder="e.g., 300-450"
         pattern="^(?:2(?:0[4-9]|[1-9][0-9])|[3-5][0-9]{2})-[0-9]{3}$"
         title="Enter price in 000-000 format (204-000 to 599-999)"
     />
+    <p id="price-preview" style="margin:0 0 10px; font-weight:bold;"></p>
     <input type="number" id="product-range" placeholder="Delivery Range (km)" />
     <input type="file" id="product-image" accept="image/*" multiple>
 
@@ -104,15 +105,26 @@
 
 
     <script>
-        const token = localStorage.getItem("access_token");
-
-        if (!token) {
-            alert("You are not logged in.");
-            window.location.href = "/static/index.html";
-        }
 
         let shopName = "";
         let registeredPhone = "";
+
+        function updatePricePreview() {
+            const val = document.getElementById("product-price").value.trim();
+            const previewEl = document.getElementById("price-preview");
+            if (!val) {
+                previewEl.textContent = "Enter price range like 300-450";
+                return;
+            }
+            if (val.includes("-")) {
+                const [min, max] = val.split("-");
+                if (min && max) {
+                    previewEl.textContent = `Price Range: ₹${min} - ₹${max}`;
+                    return;
+                }
+            }
+            previewEl.textContent = `Price: ₹${val}`;
+        }
 
         async function loadShopInfo() {
             const resName = await fetch("/shop/name", {
@@ -130,28 +142,26 @@
                 const data = await resPhone.json();
                 registeredPhone = data.phone_number || "";
 
-
+            }
 
         }
-        window.addEventListener('DOMContentLoaded', loadShopInfo);
+
+
+
 
         async function addProduct() {
             const name = document.getElementById("product-name").value.trim();
             const desc = document.getElementById("product-desc").value.trim();
-            const price = parseFloat(document.getElementById("product-price").value);
+            const price = document.getElementById("product-price").value.trim();
             const range = parseInt(document.getElementById("product-range").value);
             const imageInput = document.getElementById("product-image");
-
-            const phone = prompt("Enter your shop phone number to verify:") || "";
-
-
-            if (!name || isNaN(price) || !imageInput.files.length) {
+            if (!name || !price || !imageInput.files.length) {
                 document.getElementById("seller-msg").style.color = "red";
                 document.getElementById("seller-msg").textContent = "All fields are required.";
                 return;
             }
+                        const phone = prompt("Enter your shop phone number to verify:") || "";
 
-            const phone = prompt("Enter your shop phone number to verify:") || "";
             if (!phone) return;
 
             try {
@@ -178,7 +188,6 @@
 
             const formData = new FormData();
             formData.append("name", name);
-            formData.append("shop_name", shopName);
             formData.append("description", desc);
             formData.append("price", price);
             formData.append("delivery_range_km", range);
@@ -190,7 +199,6 @@
             try {
                 const res = await fetch("/products", {
                     method: "POST",
-                    headers: { Authorization: "Bearer " + token },
                     body: formData
                 });
 
@@ -213,21 +221,24 @@
                 row.innerHTML += `<td>${name}</td><td>${price}</td><td>${desc}</td>`;
                 tbody.appendChild(row);
 
-                // Clear inputs
+                // Clear inputs so seller can add another product if desired
                 document.getElementById("product-name").value = "";
                 document.getElementById("product-desc").value = "";
                 document.getElementById("product-price").value = "";
                 document.getElementById("product-range").value = "";
                 document.getElementById("product-image").value = "";
-                // Redirect to home page to see the product under the Products section
-                window.location.href = '/static/sellers.html';
+                // Do not refresh the page so the preview remains visible
             } catch (err) {
                 document.getElementById("seller-msg").style.color = "red";
                 document.getElementById("seller-msg").textContent = err.message;
             }
         }
 
-        
+                window.addEventListener('DOMContentLoaded', () => {
+                    loadShopInfo();
+                    document.getElementById('product-price').addEventListener('input', updatePricePreview);
+                    updatePricePreview();
+                });
     </script>
 
 </body>
