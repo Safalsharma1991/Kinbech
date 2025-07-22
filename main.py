@@ -36,6 +36,7 @@ from models import (
     ResetToken,
     Shop,
     AddedProduct,
+    Like,
 )
 from database import engine, get_db, SessionLocal
 from schemas import ProductOut
@@ -600,6 +601,7 @@ async def get_public_products(db: Session = Depends(get_db)):
     db_products = db.query(DBProduct).filter(DBProduct.is_validated == True).all()
     products = []
     for p in db_products:
+        like_row = db.query(Like).filter(Like.product_id == p.id).first()
         products.append({
             "id": p.id,
             "name": p.name,
@@ -607,8 +609,23 @@ async def get_public_products(db: Session = Depends(get_db)):
             "price": p.price,
             "image_urls": p.image_url.split(","),
             "delivery_range_km": p.delivery_range_km,
+            "likes": like_row.like if like_row else 0,
         })
     return products
+
+
+@app.post("/products/{product_id}/like")
+def like_product(product_id: int, db: Session = Depends(get_db)):
+    """Increment like count for a product."""
+    like_row = db.query(Like).filter(Like.product_id == product_id).first()
+    if not like_row:
+        like_row = Like(product_id=product_id, like=1)
+        db.add(like_row)
+    else:
+        like_row.like += 1
+    db.commit()
+    db.refresh(like_row)
+    return {"likes": like_row.like}
 
 @app.post("/buy/{product_id}")
 async def buy_product(
